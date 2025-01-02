@@ -1,0 +1,14 @@
+CREATE TABLE IF NOT EXISTS `admins` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `uid` VARCHAR(36) NOT NULL UNIQUE,
+    `name` VARCHAR(255) NOT NULL,
+    `email` VARCHAR(255) NOT NULL UNIQUE,
+    `phone_number` VARCHAR(20) DEFAULT NULL,
+    `address` TEXT DEFAULT NULL,
+    `is_active` BOOLEAN DEFAULT TRUE,
+    `role` ENUM('admin', 'superadmin') DEFAULT 'admin',
+    `profile_picture_url` VARCHAR(255) DEFAULT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `last_login` TIMESTAMP NULL DEFAULT NULL
+);
