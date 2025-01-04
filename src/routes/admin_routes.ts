@@ -1,15 +1,12 @@
-import express from 'express';
-//import { verifyToken } from '../middlewares/auth_middleware';
+import { Router } from 'express';
 import { AdminController } from '../controllers/admin_controller';
 
-const router = express.Router();
+const router = Router();
 
-const adminController = new AdminController();
-
-// Admin Routes
-router.get('/getAdminProfile/:uid', adminController.getProfile.bind(adminController));
-router.post('/addAdminProfile', adminController.createProfile.bind(adminController));
-router.put('/modifyAdmin/:uid', adminController.updateProfile.bind(adminController));
-router.delete('/deleteAdmin/:uid', adminController.deleteProfile.bind(adminController));
+router.get('/', AdminController.getAllAdmins);
+router.get('/:id', AdminController.getAdminById);
+router.post('/', AdminController.createAdmin);
+router.put('/:id', AdminController.updateAdmin);
+router.delete('/:id', AdminController.deleteAdmin);
 
 export default router;

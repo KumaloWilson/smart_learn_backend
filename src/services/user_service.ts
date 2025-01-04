@@ -1,45 +1,103 @@
-import { UserModel } from '../models/user';
-import { AdminModel } from '../models/admin';
-import { StudentModel } from '../models/student';
-import { LecturerModel } from '../models/lecturer';
+import bcrypt from 'bcrypt';
+import db from '../config/sql_config';
+import { User } from '../models/user';
+import { AuthResponse } from '../models/auth_response'
+import { AdminService } from './admin_service';
+import { LecturerService } from './lecturer_service'
+import { StudentService } from './student_service';
 
 export class UserService {
-    private userModel = new UserModel();
-    private adminModel = new AdminModel();
-    private studentModel = new StudentModel();
-    private lecturerModel = new LecturerModel();
+    static async getAllUsers(): Promise<User[]> {
+        const [rows] = await db.query('SELECT uid, username, role, created_at, updated_at FROM users');
+        return rows as User[];
+    }
 
-    async login(username: string, password: string): Promise<any> {
-        const user = await this.userModel.login(username, password);
-        if (!user) throw new Error('Invalid username or password.');
+    static async getUserById(uid: string): Promise<User | null> {
+        const [rows]: any = await db.query('SELECT uid, username, role, created_at, updated_at FROM users WHERE uid = ?', [uid]);
+        return rows[0] || null;
+    }
 
-        const { role, uid } = user;
-        let profile;
+    static async getUserByUsername(username: string): Promise<User | null> {
+        const [rows]: any = await db.query('SELECT uid, username, role, created_at, updated_at FROM users WHERE username = ?', [username]);
+        return rows[0] || null;
+    }
 
-        switch (role) {
-            case 'admin':
-                profile = await this.adminModel.getProfile(uid);
-                break;
-            case 'student':
-                profile = await this.studentModel.getProfile(uid);
-                break;
-            case 'lecturer':
-                profile = await this.lecturerModel.getProfile(uid);
-                break;
-            default:
-                throw new Error('Invalid role.');
+    static async createUserAuthAccount(user: User): Promise<User> {
+        const hashedPassword = await bcrypt.hash(user.password, 10);
+        const sql = `INSERT INTO users (uid, username, role, password) VALUES (?, ?, ?, ?)`;
+        await db.query(sql, [user.uid, user.username, user.role, hashedPassword]);
+
+        return user
+    }
+
+    static async updateUser(uid: string, user: Partial<User>): Promise<void> {
+        if (user.password) {
+            user.password = await bcrypt.hash(user.password, 10);
         }
-
-        return { role, profile };
+        const sql = `UPDATE users SET ? WHERE uid = ?`;
+        await db.query(sql, [user, uid]);
     }
 
-    async registerUser(uid: string, username: string, role: string, password: string): Promise<any> {
-        const user = await this.userModel.register(uid, username, role, password);
-        return user;
+    static async deleteUser(uid: string): Promise<void> {
+        await db.query('DELETE FROM users WHERE uid = ?', [uid]);
     }
 
-    async findUserByUsername(username: string): Promise<any> {
-        const userAccount = await this.userModel.findUserByUsername(username);
-        return userAccount;
+
+    // Service
+    static async authenticateUser(username: string, password: string): Promise<AuthResponse | null> {
+        try {
+            const [rows]: any = await db.query('SELECT * FROM users WHERE username = ?', [username]);
+            const user = rows[0] as User;
+
+            if (!user) {
+                throw new Error('USER_NOT_FOUND');
+            }
+
+            console.log("password", password);
+            console.log('user', user.password);
+
+            const isValidPassword = await bcrypt.compare(password, user.password);
+
+            if (!isValidPassword) {
+
+                console.log('user', user.password);
+
+                throw new Error('INVALID_PASSWORD');
+            }
+
+            const { role } = user;
+            let profile = null;
+
+            try {
+                switch (role) {
+                    case 'admin':
+                        profile = await AdminService.getAdminByUsername(username);
+                        break;
+                    case 'student':
+                        profile = await StudentService.getStudentByStudentID(username);
+                        break;
+                    case 'lecturer':
+                        profile = await LecturerService.getLecturerByUsername(username);
+                        break;
+                    default:
+                        throw new Error('INVALID_ROLE');
+                }
+
+                if (!profile) {
+                    throw new Error('PROFILE_NOT_FOUND');
+                }
+
+            } catch (profileError) {
+                console.error('Profile fetch error:', profileError);
+                throw profileError;
+            }
+
+            return { user, role, profile };
+        } catch (error) {
+            console.error('Authentication service error:', error);
+            throw error;
+        }
     }
 }
+
+
