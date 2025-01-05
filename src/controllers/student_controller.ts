@@ -32,6 +32,7 @@ export class StudentController {
         try {
             const studentData = req.body;
             const student_id = studentData.student_id;
+            const DEFAULT_PASSWORD = "DefaultPassword";
             // Check if user with email already exists
             const existingUser = await UserService.getUserByUsername(student_id);
             if (existingUser) {
@@ -43,7 +44,7 @@ export class StudentController {
             const createdStudent = await StudentService.createStudent(studentData);
 
             // Create corresponding user account for authentication
-            const DEFAULT_PASSWORD = "Welcome123!";
+
             const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, 12);
 
             if (!createdStudent) {

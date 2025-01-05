@@ -1,6 +1,6 @@
 import app from './app';
 import * as dotenv from 'dotenv';
-import { runMigrations } from './migrations/migrations_runner';
+import { runMigrations } from './middlewares/migrations_runner';
 
 dotenv.config();
 

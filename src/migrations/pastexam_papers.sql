@@ -7,6 +7,5 @@ CREATE TABLE IF NOT EXISTS past_exam_papers (
     document_size INT,
     period_id INT,
     document_path VARCHAR(255),
-    module_id VARCHAR(50),
-    FOREIGN KEY (module_id) REFERENCES module(module_id)
+    course_id VARCHAR(50)
 );

@@ -1,5 +1,5 @@
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     uid VARCHAR(255) PRIMARY KEY,
     username VARCHAR(255) UNIQUE,
     role VARCHAR(255),

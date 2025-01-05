@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import { LecturerService } from '../services/lecturer_service';
 import { UserService } from '../services/user_service';
 import bcrypt from 'bcrypt';
-import { v4 as uuidv4 } from 'uuid';
 
 
 export class LecturerController {
@@ -32,14 +31,7 @@ export class LecturerController {
     static async createLecturer(req: Request, res: Response): Promise<void> {
         try {
             const lecturerData = req.body;
-            const uid = uuidv4();
-
-            // Add the uid to lecturer data
-            const lecturerWithUID = {
-                ...lecturerData,
-                uid
-            };
-
+            const DEFAULT_PASSWORD = "Welcome123!";
 
             // Check if user with email already exists
             const existingUser = await UserService.getUserByUsername(lecturerData.email_address);
@@ -50,10 +42,10 @@ export class LecturerController {
             }
 
             // Create the lecturer profile
-            const createdLecturer = await LecturerService.createLecturer(lecturerWithUID);
+            const createdLecturer = await LecturerService.createLecturer(lecturerData);
 
             // Create corresponding user account for authentication
-            const DEFAULT_PASSWORD = "Welcome123!";
+
             const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, 12);
 
 
@@ -65,8 +57,8 @@ export class LecturerController {
 
 
             const userData = {
-                uid,
-                username: createdLecturer.email_address,
+                uid: createdLecturer.lecturer_id,
+                username: createdLecturer.email,
                 password: hashedPassword,
                 role: 'lecturer'
             };
@@ -78,7 +70,7 @@ export class LecturerController {
                 message: 'Lecturer profile and user account created successfully',
                 lecturer: createdLecturer,
                 userAccount: {
-                    uid,
+                    uid: createdLecturer.lecturer_id,
                     username: userData.username,
                     role: userData.role
                 },

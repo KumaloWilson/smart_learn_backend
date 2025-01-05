@@ -1,14 +1,19 @@
 export interface Admin {
-    id?: number; // Optional because it's auto-generated
-    uid: string;
-    name: string;
+    admin_id: string;
+    role_id: string;
+    employee_id: string;
+    first_name: string;
+    last_name: string;
     email: string;
-    phone_number?: string;
-    address?: string;
-    is_active?: boolean;
-    role?: 'admin' | 'superadmin';
-    profile_picture_url?: string;
-    created_at?: Date;
-    updated_at?: Date;
-    last_login?: Date | null;
+    phone?: string;
+    username: string;
+    password_hash: string;
+    last_password_change?: string;
+    last_login?: string;
+    failed_login_attempts: number;
+    account_locked: boolean;
+    lock_timestamp?: string;
+    status: 'active' | 'inactive' | 'suspended';
+    created_at?: string;
+    updated_at?: string;
 }

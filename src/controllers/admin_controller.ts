@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import { AdminService } from '../services/admin_service';
 import { UserService } from '../services/user_service';
 import bcrypt from 'bcrypt';
-import { v4 as uuidv4 } from 'uuid';
 
 export class AdminController {
     static async getAllAdmins(req: Request, res: Response): Promise<void> {
@@ -31,13 +30,6 @@ export class AdminController {
     static async createAdmin(req: Request, res: Response): Promise<void> {
         try {
             const adminData = req.body;
-            const uid = uuidv4();
-
-            // Add the uid to admin data
-            const adminWithUID = {
-                ...adminData,
-                uid
-            };
 
             // Check if user with email already exists
             const existingUser = await UserService.getUserByUsername(adminData.email);
@@ -49,7 +41,7 @@ export class AdminController {
 
 
             // Create the admin profile
-            const createdAdmin = await AdminService.createAdmin(adminWithUID);
+            const createdAdmin = await AdminService.createAdmin(adminData);
 
             // Create corresponding user account for authentication
             const DEFAULT_PASSWORD = "Welcome123!";
@@ -61,7 +53,7 @@ export class AdminController {
             }
 
             const userData = {
-                uid,
+                uid: createdAdmin.admin_id,
                 username: createdAdmin.email,
                 password: hashedPassword,
                 role: 'admin'
@@ -75,9 +67,9 @@ export class AdminController {
                 message: 'Admin profile and user account created successfully',
                 admin: createdAdmin,
                 userAccount: {
-                    uid,
+                    uid: createdAdmin.admin_id,
                     username: userData.username,
-                    role: userData.role
+                    role: userData.role,
                 },
             });
 
