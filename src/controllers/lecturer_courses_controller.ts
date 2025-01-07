@@ -11,6 +11,16 @@ export class LecturerCourseAssignmentController {
         }
     }
 
+    static async getAssignmentsByLecturerId(req: Request, res: Response): Promise<void> {
+        try {
+            const { lecturer_id } = req.params;
+            const assignments = await LecturerCourseAssignmentService.getAssignmentsByLecturerId(lecturer_id);
+            res.json(assignments);
+        } catch (err) {
+            res.status(500).json({ error: err });
+        }
+    }
+
     static async getAssignmentById(req: Request, res: Response): Promise<void> {
         try {
             const { assignment_id } = req.params;

@@ -12,6 +12,14 @@ export class DepartmentService {
         return rows[0] || null;
     }
 
+    static async getDepartmentsBySchoolId(school_id: string): Promise<Department[]> {
+        console.log('Fetching departments for school_id:', school_id); // Debugging
+        const [rows] = await db.query('SELECT * FROM departments WHERE school_id = ?', [school_id]);
+        console.log('Query result:', rows); // Debugging
+        return rows as Department[];
+    }
+
+
     static async createDepartment(department: Department): Promise<void> {
         const sql = `INSERT INTO departments SET ?`;
         await db.query(sql, department);

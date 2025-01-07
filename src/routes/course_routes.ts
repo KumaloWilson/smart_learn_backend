@@ -5,6 +5,7 @@ const router = Router();
 
 router.get('/', CourseController.getAllCourses);
 router.get('/:course_id', CourseController.getCourseById);
+router.get('/program/:program_id', CourseController.getCoursesByProgramId);
 router.post('/', CourseController.createCourse);
 router.put('/:course_id', CourseController.updateCourse);
 router.delete('/:course_id', CourseController.deleteCourse);

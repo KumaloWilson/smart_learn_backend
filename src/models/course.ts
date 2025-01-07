@@ -10,6 +10,7 @@ export interface Course {
     semester_offered?: 'fall' | 'spring' | 'summer' | 'all';
     course_level?: number;
     is_elective?: boolean;
+    phase?: number;
     syllabus_path?: string;
     status?: 'active' | 'inactive';
     created_at?: Date;

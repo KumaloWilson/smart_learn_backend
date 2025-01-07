@@ -1,6 +1,6 @@
 export interface Program {
     program_id: string;
-    department_id: string;
+    school_id: string;
     program_name: string;
     program_code?: string;
     degree_level?: 'certificate' | 'diploma' | 'bachelor' | 'master' | 'doctorate';

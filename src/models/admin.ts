@@ -6,9 +6,6 @@ export interface Admin {
     last_name: string;
     email: string;
     phone?: string;
-    username: string;
-    password_hash: string;
-    last_password_change?: string;
     last_login?: string;
     failed_login_attempts: number;
     account_locked: boolean;

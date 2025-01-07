@@ -7,7 +7,7 @@ export interface Lecturer {
     title: 'Dr.' | 'Prof.' | 'Mr.' | 'Mrs.' | 'Ms.' | 'Mx.';
     primary_department_id?: string;
     date_of_birth?: Date;
-    gender: 'M' | 'F' | 'O';
+    gender: 'Male' | 'Female' | 'Other';
     email: string;
     phone?: string;
     office_location?: string;

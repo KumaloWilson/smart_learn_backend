@@ -12,6 +12,13 @@ export class CourseService {
         return rows[0] || null;
     }
 
+    static async getCourseByProgramId(program_id: string): Promise<Course[]> {
+        console.log('Fetching courses for program_id:', program_id); // Debugging
+        const [rows] = await db.query('SELECT * FROM courses WHERE program_id = ?', [program_id]);
+        console.log('Query result:', rows); // Debugging
+        return rows as Course[];
+    }
+
     static async createCourse(course: Course): Promise<void> {
         const sql = `INSERT INTO courses SET ?`;
         await db.query(sql, course);

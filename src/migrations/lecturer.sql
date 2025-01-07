@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS lecturers (
     title ENUM('Dr.', 'Prof.', 'Mr.', 'Mrs.', 'Ms.', 'Mx.') NOT NULL,
     primary_department_id VARCHAR(50),
     date_of_birth DATE,
-    gender ENUM('M', 'F', 'O') NOT NULL,
+      gender ENUM('Male', 'Female', 'Other') NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     phone VARCHAR(20),
     office_location VARCHAR(100),

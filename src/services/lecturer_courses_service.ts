@@ -1,17 +1,66 @@
 import db from '../config/sql_config';
-import { LecturerCourseAssignment } from '../models/lecturer_courses';
+import { LecturerCourseAssignment, LecturerCourseAssignmentDetails } from '../models/lecturer_courses';
 
 export class LecturerCourseAssignmentService {
-    static async getAllAssignments(): Promise<LecturerCourseAssignment[]> {
-        const [rows] = await db.query('SELECT * FROM lecturer_course_assignments');
-        return rows as LecturerCourseAssignment[];
+    static async getAllAssignments(): Promise<LecturerCourseAssignmentDetails[]> {
+        const sql = `
+            SELECT 
+                lca.assignment_id,
+                lca.lecturer_id,
+                lca.course_id,
+                lca.academic_year,
+                lca.semester,
+                lca.role,
+                c.course_name,
+                c.course_code,
+                c.description,
+                lca.created_at
+            FROM lecturer_course_assignments lca
+            JOIN courses c ON lca.course_id = c.course_id;
+        `;
+        const [rows] = await db.query(sql);
+        return rows as LecturerCourseAssignmentDetails[];
     }
 
-    static async getAssignmentById(assignment_id: string): Promise<LecturerCourseAssignment | null> {
-        const [rows]: any = await db.query(
-            'SELECT * FROM lecturer_course_assignments WHERE assignment_id = ?',
-            [assignment_id]
-        );
+    static async getAssignmentsByLecturerId(lecturer_id: string): Promise<LecturerCourseAssignmentDetails[]> {
+        const sql = `
+            SELECT 
+                lca.assignment_id,
+                lca.lecturer_id,
+                lca.course_id,
+                lca.academic_year,
+                lca.semester,
+                lca.role,
+                c.course_name,
+                c.course_code,
+                c.description,
+                lca.created_at
+            FROM lecturer_course_assignments lca
+            JOIN courses c ON lca.course_id = c.course_id
+            WHERE lca.lecturer_id = ?;
+        `;
+        const [rows] = await db.query(sql, [lecturer_id]);
+        return rows as LecturerCourseAssignmentDetails[];
+    }
+
+    static async getAssignmentById(assignment_id: string): Promise<LecturerCourseAssignmentDetails | null> {
+        const sql = `
+            SELECT 
+                lca.assignment_id,
+                lca.lecturer_id,
+                lca.course_id,
+                lca.academic_year,
+                lca.semester,
+                lca.role,
+                c.course_name,
+                c.course_code,
+                c.description,
+                lca.created_at
+            FROM lecturer_course_assignments lca
+            JOIN courses c ON lca.course_id = c.course_id
+            WHERE lca.assignment_id = ?;
+        `;
+        const [rows]: any = await db.query(sql, [assignment_id]);
         return rows[0] || null;
     }
 
@@ -29,8 +78,7 @@ export class LecturerCourseAssignmentService {
     }
 
     static async deleteAssignment(assignment_id: string): Promise<void> {
-        await db.query('DELETE FROM lecturer_course_assignments WHERE assignment_id = ?', [
-            assignment_id,
-        ]);
+        await db.query('DELETE FROM lecturer_course_assignments WHERE assignment_id = ?', [assignment_id]);
     }
 }
+

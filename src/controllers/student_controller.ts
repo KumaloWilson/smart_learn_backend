@@ -52,23 +52,16 @@ export class StudentController {
                 return;
             }
 
-            const userData = {
-                uid: student_id,
-                username: createdStudent.student_id,
-                password: hashedPassword,
-                role: 'student'
-            };
 
-            // Create the user account
-            await UserService.createUserAuthAccount(userData);
+            await UserService.createUserAuthAccount({ uid: student_id, username: createdStudent.student_id, role: "student", password: hashedPassword });
 
             res.status(201).json({
                 message: 'Student profile and user account created successfully',
                 student: createdStudent,
                 userAccount: {
                     uid: student_id,
-                    username: userData.username,
-                    role: userData.role
+                    username: createdStudent.student_id,
+                    role: 'student',
                 },
             });
 
