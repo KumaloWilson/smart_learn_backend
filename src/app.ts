@@ -23,6 +23,7 @@ import qualificationTypeRoutes from './routes/qualification_types_routes';
 import systemPermissionRoutes from './routes/system_permission_routes';
 import rolePermissionRoutes from './routes/role_permissions_routes';
 import auditLogRoutes from './routes/audit_log_routes';
+import quizGenerationRoutes from './routes/quiz_generation_routes';
 
 const app = express();
 
@@ -69,6 +70,9 @@ app.use('/api/v1/courses', courseRoutes);
 
 // Qualification Type Routes
 app.use('/api/v1/qualification/types', qualificationTypeRoutes);
+
+//Quiz Routes
+app.use('/api/v1/quiz', quizGenerationRoutes)
 
 // Permissions Routes
 app.use('/api/v1/permissions/system', systemPermissionRoutes);
