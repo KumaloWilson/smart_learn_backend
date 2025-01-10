@@ -1,20 +1,11 @@
-
-export interface Quiz {
+interface QuizSession {
+    attempt_id: string;
     quiz_id: string;
-    course_id: string;
-    topic: string;
-    subtopic?: string;
-    difficulty: 'easy' | 'medium' | 'hard';
-    created_by: string;
-    total_questions: number;
-    time_limit?: number;
-    passing_score?: number;
-    status: 'draft' | 'active' | 'archived';
-    learning_objectives?: string[];
-    tags?: string[];
-    created_at: Date;
-    updated_at: Date;
+    student_id: string;
+    start_time: Date;
+    end_time?: Date;
+    current_question_index: number;
+    remaining_time: number;
+    status: 'in_progress' | 'completed' | 'abandoned' | 'timed_out';
+    score?: number;
 }
-
-
-

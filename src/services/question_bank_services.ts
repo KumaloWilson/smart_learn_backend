@@ -24,8 +24,6 @@ export class QuestionBankService {
 
                 const values = [
                     question.question_id,
-                    question.quiz_id,
-                    question.course_id,
                     question.text,
                     JSON.stringify(question.options),
                     question.correct_answer,

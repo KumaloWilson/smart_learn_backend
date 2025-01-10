@@ -1,14 +1,10 @@
-
 export interface StudentProgress {
+    progress_id: string;
     student_id: string;
-    course_id: string;
-    topic: string;
-    total_attempts: number;
-    best_score: number;
-    average_score: number;
-    weak_areas: string[];
-    strong_areas: string[];
-    time_spent: number;
-    last_attempt_date: Date;
-    improvement_rate: number;
+    subtopic_id: string;
+    mastery_level: number;
+    attempts_count: number;
+    last_attempt_date?: Date;
+    created_at: Date;
+    updated_at: Date;
 }

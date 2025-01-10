@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { Question } from '../models/quiz_question';
-import db from '../config/sql_config';
 import { v4 as uuidv4 } from 'uuid';
 
 const DEEPINFRA_API_KEY = process.env.DEEPINFRA_API_KEY;
