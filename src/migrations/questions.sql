@@ -1,7 +1,7 @@
 
 CREATE TABLE IF NOT EXISTS questions (
+    attempt_id VARCHAR(36),
     question_id VARCHAR(36) PRIMARY KEY,
-    quiz_id VARCHAR(36) NOT NULL,
     text TEXT NOT NULL,
     options JSON NOT NULL,
     correct_answer VARCHAR(255) NOT NULL,

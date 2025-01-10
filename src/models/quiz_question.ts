@@ -1,4 +1,5 @@
 export interface Question {
+    attempt_id: string
     question_id: string;
     text: string;
     options: string[];

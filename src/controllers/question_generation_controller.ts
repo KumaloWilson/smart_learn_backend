@@ -14,6 +14,7 @@ export class QuestionGenerationController {
             } = req.body;
 
             const questions = await QuestionGenerationService.generateQuestions(
+                '',
                 topic,
                 difficulty,
                 count,

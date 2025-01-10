@@ -1,9 +1,14 @@
 import { Question } from '../models/quiz_question';
 import db from '../config/sql_config';
-import { ResultSetHeader } from 'mysql2';
+import { ResultSetHeader, } from 'mysql2/promise';
 
 export class QuestionBankService {
-
+    /**
+     * Saves multiple questions to the database in a single transaction
+     * @param questions Array of Question objects to save
+     * @returns Promise<Question[]> Array of successfully saved questions
+     * @throws Error if the save operation fails
+     */
     static async saveQuestions(questions: Question[]): Promise<Question[]> {
         const connection = await db.getConnection();
 
@@ -14,31 +19,37 @@ export class QuestionBankService {
 
             for (const question of questions) {
                 const sql = `
-                    INSERT INTO question_bank (
-                        question_id, quiz_id, course_id, text, options, correct_answer,
-                        explanation, difficulty, topic, subtopic, points,
-                        time_estimate, hint, misconception, tags, type,
-                        created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO questions (
+                        attempt_id,
+                        question_id,
+                        text,
+                        options,
+                        correct_answer,
+                        explanation,
+                        hint,
+                        difficulty,
+                        misconception,
+                        points,
+                        time_estimate,
+                        tags,
+                        type
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 `;
 
                 const values = [
+                    question.attempt_id,
                     question.question_id,
                     question.text,
                     JSON.stringify(question.options),
                     question.correct_answer,
-                    question.explanation,
+                    question.explanation || null,
+                    question.hint || null,
                     question.difficulty,
-                    question.topic,
-                    question.subtopic,
+                    question.misconception || null,
                     question.points,
                     question.time_estimate,
-                    question.hint,
-                    question.misconception,
-                    JSON.stringify(question.tags),
-                    question.type,
-                    question.created_at,
-                    question.updated_at
+                    question.tags ? JSON.stringify(question.tags) : null,
+                    question.type
                 ];
 
                 const [result] = await connection.execute<ResultSetHeader>(sql, values);
@@ -51,10 +62,11 @@ export class QuestionBankService {
             await connection.commit();
             return savedQuestions;
 
-        } catch (error: any) {
+        } catch (error) {
             await connection.rollback();
             console.error("Error saving questions:", error);
-            throw new Error(`Failed to save questions: ${error.message}`);
+            throw new Error(`Failed to save questions: ${error instanceof Error ? error.message : 'Unknown error'}`);
+
         } finally {
             connection.release();
         }

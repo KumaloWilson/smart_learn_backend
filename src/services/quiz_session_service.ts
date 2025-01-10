@@ -4,6 +4,8 @@ import { QuizSession } from '../models/quiz_session';
 import { QuestionResponse } from '../models/quiz_question_response';
 import { LearningAnalyticsService } from './learning_analytics_service';
 import { Quiz } from './quiz';
+import { QuestionGenerationService } from './quiz_generation_service';
+import { Question } from '../models/quiz_question';
 
 
 export class QuizSessionService {
@@ -49,9 +51,24 @@ export class QuizSessionService {
         ];
 
         await db.query(sql, values);
+
     }
 
-    static async startQuizAttempt(student_id: string, quiz: Quiz): Promise<QuizSession> {
+    static async startQuizAttempt(student_id: string, quiz: Quiz): Promise<{ quizSession: QuizSession, questions: Question[] }> {
+
+        const attempt_id = uuidv4();
+
+        const questions = await QuestionGenerationService.generateQuestions(
+            attempt_id,
+            quiz.topic,
+            quiz.difficulty,
+            quiz.total_questions,
+            {
+                subtopic: quiz.subtopic,
+                learningObjectives: quiz.learning_objectives,
+            }
+        );
+
 
         await this.createQuiz(quiz);
         // Validate quiz availability and attempt limits
@@ -74,7 +91,6 @@ export class QuizSessionService {
         }
 
         // Create new attempt
-        const attempt_id = uuidv4();
         const session: QuizSession = {
             attempt_id,
             quiz_id: quiz.quiz_id,
@@ -91,7 +107,10 @@ export class QuizSessionService {
             ) VALUES (?, ?, ?, ?, ?)
         `, [attempt_id, student_id, quiz.quiz_id, session.start_time, session.status]);
 
-        return session;
+        return {
+            quizSession: session,
+            questions: questions
+        };
     }
 
     static async getQuizAttempt(attempt_id: string): Promise<QuizSession> {

@@ -5,8 +5,8 @@ export class QuizController {
     static async startQuiz(req: Request, res: Response) {
         try {
             const { student_id, quiz } = req.body;
-            const attempt_id = await QuizSessionService.startQuizAttempt(student_id, quiz);
-            res.json({ attempt_id });
+            const attempt = await QuizSessionService.startQuizAttempt(student_id, quiz);
+            res.json({ attempt });
         } catch (error: any) {
             res.status(400).json({ error: error.message });
         }

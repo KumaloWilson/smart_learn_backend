@@ -1,18 +1,19 @@
 import axios from 'axios';
 import { Question } from '../models/quiz_question';
 import { v4 as uuidv4 } from 'uuid';
+import { QuestionBankService } from './question_bank_services';
 
 const DEEPINFRA_API_KEY = process.env.DEEPINFRA_API_KEY;
 const MODEL_URL = 'https://api.deepinfra.com/v1/inference/meta-llama/Llama-3.3-70B-Instruct-Turbo';
 
 export class QuestionGenerationService {
-    static async generateQuestions(topic: string, difficulty: 'easy' | 'medium' | 'hard', count: number, params: {
+    static async generateQuestions(attempt_id: string, topic: string, difficulty: 'easy' | 'medium' | 'hard', count: number, params: {
         subtopic?: string,
         learningObjectives?: string[],
         previousQuestions?: string[]
     }): Promise<Question[]> {
         // Structured prompt to enforce JSON response
-        const prompt = `Generate ${count} multiple choice questions about ${topic}${params.subtopic ? ` (${params.subtopic})` : ''} at ${difficulty} level. Return response in this exact JSON format:
+        const prompt = `Generate ${count} multiple choice questions about ${topic}${params.subtopic ? ` (${params.subtopic})` : ''} at ${difficulty} level. Your response should be in strictly JSON Format below and JSON only:
         {
           "questions": [
             {
@@ -42,6 +43,9 @@ export class QuestionGenerationService {
             });
 
             const generatedText = response.data.results[0]?.generated_text;
+
+            console.log(generatedText);
+
             if (!generatedText) throw new Error('No response from model');
 
             // Extract JSON from the response
@@ -53,7 +57,8 @@ export class QuestionGenerationService {
                 throw new Error('Invalid question format');
             }
 
-            return parsedData.questions.map((q: any) => ({
+            const questionList = parsedData.questions.map((q: any) => ({
+                attempt_id: attempt_id,
                 question_id: uuidv4(),
                 text: q.text,
                 options: q.options,
@@ -68,9 +73,13 @@ export class QuestionGenerationService {
                 misconception: q.misconception,
                 tags: q.tags,
                 type: 'multiple_choice',
-                created_at: new Date(),
-                updated_at: new Date()
             }));
+
+            await QuestionBankService.saveQuestions(questionList);
+
+
+
+            return questionList;
         } catch (error: any) {
             console.error("Question generation error:", error);
             throw new Error(`Failed to generate questions: ${error.message}`);
