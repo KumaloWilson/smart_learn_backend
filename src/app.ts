@@ -27,7 +27,6 @@ import quizGenerationRoutes from './routes/quiz_generation_routes';
 import quizSessionRoutes from './routes/quiz_attempt_routes';
 import quizAnalyticsRoutes from './routes/analytics_routes';
 import quizProgressRoutes from './routes/progress_routes';
-import quizLecturerRoutes from './routes/lecturer_quiz_routes'
 
 const app = express();
 
@@ -80,7 +79,6 @@ app.use('/api/v1/generate/quiz', quizGenerationRoutes)
 app.use('/api/v1/quiz/session', quizSessionRoutes);
 app.use('/api/v1/quiz/analytics', quizAnalyticsRoutes);
 app.use('/api/v1/quiz/progress', quizProgressRoutes);
-app.use('/api/v1/quiz/instructor', quizLecturerRoutes);
 
 
 // Permissions Routes
