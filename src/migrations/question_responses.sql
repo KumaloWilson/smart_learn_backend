@@ -4,6 +4,12 @@ CREATE TABLE IF NOT EXISTS question_responses (
     question_id VARCHAR(36) NOT NULL,
     student_answer VARCHAR(255) NOT NULL,
     is_correct BOOLEAN NOT NULL,
-    time_taken INT, -- in seconds
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    time_taken INT,
+    points_earned INT NOT NULL DEFAULT 0,
+    feedback TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (attempt_id) REFERENCES quiz_attempts(attempt_id),
+    FOREIGN KEY (question_id) REFERENCES questions(question_id),
+    INDEX idx_attempt_id (attempt_id),
+    INDEX idx_question_id (question_id)
 );

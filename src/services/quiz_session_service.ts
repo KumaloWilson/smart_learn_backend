@@ -10,50 +10,6 @@ import { Question } from '../models/quiz_question';
 
 export class QuizSessionService {
 
-    static async createQuiz(quiz: Quiz): Promise<void> {
-        // Convert arrays to JSON strings before inserting
-        const quizData = {
-            ...quiz,
-            learning_objectives: quiz.learning_objectives ? JSON.stringify(quiz.learning_objectives) : null,
-            tags: quiz.tags ? JSON.stringify(quiz.tags) : null
-        };
-
-        const sql = `
-            INSERT INTO quizzes (
-                quiz_id,
-                course_id,
-                topic,
-                subtopic,
-                difficulty,
-                created_by,
-                total_questions,
-                time_limit,
-                passing_score,
-                status,
-                learning_objectives,
-                tags
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `;
-
-        const values = [
-            quizData.quiz_id,
-            quizData.course_id,
-            quizData.topic,
-            quizData.subtopic || null,
-            quizData.difficulty,
-            quizData.created_by,
-            quizData.total_questions,
-            quizData.time_limit || null,
-            quizData.passing_score || null,
-            quizData.status,
-            quizData.learning_objectives,
-            quizData.tags
-        ];
-
-        await db.query(sql, values);
-
-    }
-
     static async startQuizAttempt(student_id: string, quiz: Quiz): Promise<{ quizSession: QuizSession, questions: Question[] }> {
 
         const attempt_id = uuidv4();
@@ -110,35 +66,6 @@ export class QuizSessionService {
         return {
             quizSession: session,
             questions: questions
-        };
-    }
-
-    static async getQuizAttempt(attempt_id: string): Promise<QuizSession> {
-        const [attempt]: any = await db.query(`
-            SELECT qa.*, q.time_limit
-            FROM quiz_attempts qa
-            JOIN quizzes q ON qa.quiz_id = q.quiz_id
-            WHERE qa.attempt_id = ?
-        `, [attempt_id]);
-
-        if (!attempt.length) {
-            throw new Error('Quiz attempt not found');
-        }
-
-        // Calculate remaining time
-        const elapsedTime = Math.floor((Date.now() - new Date(attempt[0].start_time).getTime()) / 1000);
-        const remainingTime = Math.max(0, attempt[0].time_limit * 60 - elapsedTime);
-
-        return {
-            attempt_id: attempt[0].attempt_id,
-            quiz_id: attempt[0].quiz_id,
-            student_id: attempt[0].student_id,
-            start_time: attempt[0].start_time,
-            end_time: attempt[0].end_time,
-            current_question_index: attempt[0].current_question_index || 0,
-            remaining_time: remainingTime,
-            status: attempt[0].status,
-            score: attempt[0].score
         };
     }
 
@@ -226,6 +153,52 @@ export class QuizSessionService {
         return score;
     }
 
+    static async abandonQuizAttempt(attempt_id: string): Promise<void> {
+        const session = await this.getQuizAttempt(attempt_id);
+        if (session.status !== 'in_progress') {
+            throw new Error('Quiz attempt is not in progress');
+        }
+
+        await db.query(`
+            UPDATE quiz_attempts
+            SET 
+                status = 'abandoned',
+                end_time = CURRENT_TIMESTAMP
+            WHERE attempt_id = ?
+        `, [attempt_id]);
+    }
+
+
+    static async getQuizAttempt(attempt_id: string): Promise<QuizSession> {
+        const [attempt]: any = await db.query(`
+            SELECT qa.*, q.time_limit
+            FROM quiz_attempts qa
+            JOIN quizzes q ON qa.quiz_id = q.quiz_id
+            WHERE qa.attempt_id = ?
+        `, [attempt_id]);
+
+        if (!attempt.length) {
+            throw new Error('Quiz attempt not found');
+        }
+
+        // Calculate remaining time
+        const elapsedTime = Math.floor((Date.now() - new Date(attempt[0].start_time).getTime()) / 1000);
+        const remainingTime = Math.max(0, attempt[0].time_limit * 60 - elapsedTime);
+
+        return {
+            attempt_id: attempt[0].attempt_id,
+            quiz_id: attempt[0].quiz_id,
+            student_id: attempt[0].student_id,
+            start_time: attempt[0].start_time,
+            end_time: attempt[0].end_time,
+            current_question_index: attempt[0].current_question_index || 0,
+            remaining_time: remainingTime,
+            status: attempt[0].status,
+            score: attempt[0].score
+        };
+    }
+
+
     static async updateStudentProgress(
         student_id: string,
         quiz_id: string,
@@ -275,21 +248,6 @@ export class QuizSessionService {
         }
     }
 
-    static async abandonQuizAttempt(attempt_id: string): Promise<void> {
-        const session = await this.getQuizAttempt(attempt_id);
-        if (session.status !== 'in_progress') {
-            throw new Error('Quiz attempt is not in progress');
-        }
-
-        await db.query(`
-            UPDATE quiz_attempts
-            SET 
-                status = 'abandoned',
-                end_time = CURRENT_TIMESTAMP
-            WHERE attempt_id = ?
-        `, [attempt_id]);
-    }
-
     static async getQuizHistory(student_id: string, quiz_id?: string): Promise<any[]> {
         let query = `
             SELECT 
@@ -326,5 +284,50 @@ export class QuizSessionService {
         const weightPrevious = Math.max(0.3, 1 - 1 / (attemptCount + 1));
         const weightNew = 1 - weightPrevious;
         return (currentMastery * weightPrevious + newScore * weightNew);
+    }
+
+
+    static async createQuiz(quiz: Quiz): Promise<void> {
+        // Convert arrays to JSON strings before inserting
+        const quizData = {
+            ...quiz,
+            learning_objectives: quiz.learning_objectives ? JSON.stringify(quiz.learning_objectives) : null,
+            tags: quiz.tags ? JSON.stringify(quiz.tags) : null
+        };
+
+        const sql = `
+            INSERT INTO quizzes (
+                quiz_id,
+                course_id,
+                topic,
+                subtopic,
+                difficulty,
+                created_by,
+                total_questions,
+                time_limit,
+                passing_score,
+                status,
+                learning_objectives,
+                tags
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+
+        const values = [
+            quizData.quiz_id,
+            quizData.course_id,
+            quizData.topic,
+            quizData.subtopic || null,
+            quizData.difficulty,
+            quizData.created_by,
+            quizData.total_questions,
+            quizData.time_limit || null,
+            quizData.passing_score || null,
+            quizData.status,
+            quizData.learning_objectives,
+            quizData.tags
+        ];
+
+        await db.query(sql, values);
+
     }
 }
