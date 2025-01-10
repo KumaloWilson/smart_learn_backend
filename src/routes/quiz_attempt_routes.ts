@@ -1,41 +1,19 @@
-// routes/quiz_attempt_routes.ts
 import express from 'express';
-import { QuizAttemptController } from '../controllers/quiz_attempt_controller';
-// import { authenticateUser } from '../middleware/auth';
-// import { validateQuizAttempt } from '../middleware/validation';
+import { QuizController } from '../controllers/quiz_controller';
+import { authenticateStudent } from '../middleware/auth';
+import { validateQuizSubmission } from '../middleware/validation';
 
 const router = express.Router();
 
-// Quiz attempt management routes
-router.post(
-    '/start',
-    // authenticateUser,
-    // validateQuizAttempt,
-    QuizAttemptController.startAttempt
-);
+// Quiz session routes
+router.post('/start', authenticateStudent, QuizController.startQuiz);
+router.post('/submit', [authenticateStudent, validateQuizSubmission], QuizController.submitQuiz);
+router.get('/attempt/:attempt_id', authenticateStudent, QuizController.getQuizAttempt);
+router.get('/history/:student_id', authenticateStudent, QuizController.getQuizHistory);
 
-router.post(
-    '/submit-answer',
-    // authenticateUser,
-    QuizAttemptController.submitAnswer
-);
-
-router.post(
-    '/complete/:attempt_id',
-    // authenticateUser,
-    QuizAttemptController.completeAttempt
-);
-
-router.get(
-    '/summary/:attempt_id',
-    // authenticateUser,
-    QuizAttemptController.getAttemptSummary
-);
-
-router.post(
-    '/flag-answer/:answer_id',
-    // authenticateUser,
-    QuizAttemptController.flagAnswerForReview
-);
+// Quiz management routes
+router.get('/:quiz_id', authenticateStudent, QuizController.getQuizDetails);
+router.get('/subtopic/:subtopic_id', authenticateStudent, QuizController.getQuizzesBySubtopic);
+router.get('/practice/:topic_id', authenticateStudent, QuizController.getPracticeQuizzes);
 
 export default router;
