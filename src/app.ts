@@ -75,7 +75,7 @@ app.use('/api/v1/courses', courseRoutes);
 app.use('/api/v1/qualification/types', qualificationTypeRoutes);
 
 //Quiz Routes
-app.use('/api/v1/generate/quiz', quizGenerationRoutes)
+app.use('/api/v1//quiz/generate', quizGenerationRoutes)
 app.use('/api/v1/quiz/session', quizSessionRoutes);
 app.use('/api/v1/quiz/analytics', quizAnalyticsRoutes);
 app.use('/api/v1/quiz/progress', quizProgressRoutes);

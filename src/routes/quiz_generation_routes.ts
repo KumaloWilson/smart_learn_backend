@@ -6,7 +6,7 @@ import { QuestionGenerationController } from '../controllers/question_generation
 const router = express.Router();
 
 router.post(
-    '/generate',
+    '/',
     // authenticateUser,
     // authorizeRole(['lecturer', 'admin']),
     QuestionGenerationController.generateQuestions

@@ -1,12 +1,59 @@
-// services/quiz_session_service.ts
 import db from '../config/sql_config';
 import { v4 as uuidv4 } from 'uuid';
+import { QuizSession } from '../models/quiz_session';
 import { QuestionResponse } from '../models/quiz_question_response';
 import { LearningAnalyticsService } from './learning_analytics_service';
+import { Quiz } from './quiz';
 
 
 export class QuizSessionService {
-    static async startQuizAttempt(student_id: string, quiz_id: string): Promise<QuizSession> {
+
+    static async createQuiz(quiz: Quiz): Promise<void> {
+        // Convert arrays to JSON strings before inserting
+        const quizData = {
+            ...quiz,
+            learning_objectives: quiz.learning_objectives ? JSON.stringify(quiz.learning_objectives) : null,
+            tags: quiz.tags ? JSON.stringify(quiz.tags) : null
+        };
+
+        const sql = `
+            INSERT INTO quizzes (
+                quiz_id,
+                course_id,
+                topic,
+                subtopic,
+                difficulty,
+                created_by,
+                total_questions,
+                time_limit,
+                passing_score,
+                status,
+                learning_objectives,
+                tags
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+
+        const values = [
+            quizData.quiz_id,
+            quizData.course_id,
+            quizData.topic,
+            quizData.subtopic || null,
+            quizData.difficulty,
+            quizData.created_by,
+            quizData.total_questions,
+            quizData.time_limit || null,
+            quizData.passing_score || null,
+            quizData.status,
+            quizData.learning_objectives,
+            quizData.tags
+        ];
+
+        await db.query(sql, values);
+    }
+
+    static async startQuizAttempt(student_id: string, quiz: Quiz): Promise<QuizSession> {
+
+        await this.createQuiz(quiz);
         // Validate quiz availability and attempt limits
         const [quizInfo]: any = await db.query(`
             SELECT q.*, COUNT(qa.attempt_id) as attempt_count
@@ -16,7 +63,7 @@ export class QuizSessionService {
                 AND qa.status = 'completed'
             WHERE q.quiz_id = ?
             GROUP BY q.quiz_id
-        `, [student_id, quiz_id]);
+        `, [student_id, quiz.quiz_id]);
 
         if (!quizInfo.length) {
             throw new Error('Quiz not found');
@@ -30,7 +77,7 @@ export class QuizSessionService {
         const attempt_id = uuidv4();
         const session: QuizSession = {
             attempt_id,
-            quiz_id,
+            quiz_id: quiz.quiz_id,
             student_id,
             start_time: new Date(),
             current_question_index: 0,
@@ -42,7 +89,7 @@ export class QuizSessionService {
             INSERT INTO quiz_attempts (
                 attempt_id, student_id, quiz_id, start_time, status
             ) VALUES (?, ?, ?, ?, ?)
-        `, [attempt_id, student_id, quiz_id, session.start_time, session.status]);
+        `, [attempt_id, student_id, quiz.quiz_id, session.start_time, session.status]);
 
         return session;
     }

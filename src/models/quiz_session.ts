@@ -1,4 +1,4 @@
-interface QuizSession {
+export interface QuizSession {
     attempt_id: string;
     quiz_id: string;
     student_id: string;
