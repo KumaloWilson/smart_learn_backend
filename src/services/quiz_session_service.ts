@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { QuizSession } from '../models/quiz_session';
 import { QuestionResponse } from '../models/quiz_question_response';
 import { LearningAnalyticsService } from './learning_analytics_service';
-import { Quiz } from './quiz';
+import { Quiz } from '../models/quiz';
 import { QuestionGenerationService } from './quiz_generation_service';
 import { Question } from '../models/quiz_question';
 
@@ -69,7 +69,7 @@ export class QuizSessionService {
         };
     }
 
-    static async submitQuizAttempt(attempt_id: string, responses: QuestionResponse[]): Promise<number> {
+    static async submitQuizAttempt(attempt_id: string, responses: QuestionResponse[]): Promise<{ score: number, detailedResponses: QuestionResponse[] }> {
         // Validate attempt exists and is in progress
         const session = await this.getQuizAttempt(attempt_id);
         if (session.status !== 'in_progress') {
@@ -80,9 +80,10 @@ export class QuizSessionService {
             throw new Error('Quiz time has expired');
         }
 
-        // Calculate score and process responses
+        // Initialize variables
         let totalPoints = 0;
         let earnedPoints = 0;
+        const detailedResponses: QuestionResponse[] = [];
         const misconceptions: { subtopic_id: string, type: string }[] = [];
 
         for (const response of responses) {
@@ -94,19 +95,37 @@ export class QuizSessionService {
                 WHERE q.question_id = ?
             `, [response.question_id]);
 
-            totalPoints += questionInfo[0].points;
+            const points = questionInfo[0].points;
+            totalPoints += points;
             const isCorrect = response.student_answer === questionInfo[0].correct_answer;
 
+            let feedback = "Incorrect answer.";
             if (isCorrect) {
-                earnedPoints += questionInfo[0].points;
+                earnedPoints += points;
+                feedback = "Correct answer!";
             } else if (questionInfo[0].misconception) {
                 misconceptions.push({
                     subtopic_id: questionInfo[0].subtopic_id,
                     type: questionInfo[0].misconception
                 });
+                feedback += ` Common misconception: ${questionInfo[0].misconception}.`;
             }
 
-            // Record response
+            // Record response with additional data
+            const detailedResponse: QuestionResponse = {
+                response_id: uuidv4(),
+                attempt_id,
+                question_id: response.question_id,
+                student_answer: response.student_answer,
+                is_correct: isCorrect,
+                time_taken: response.time_taken,
+                points_earned: isCorrect ? points : 0,
+                feedback,
+            };
+
+            detailedResponses.push(detailedResponse);
+
+            // Insert into the database
             await db.query(`
                 INSERT INTO question_responses (
                     response_id,
@@ -114,15 +133,19 @@ export class QuizSessionService {
                     question_id,
                     student_answer,
                     is_correct,
-                    time_taken
-                ) VALUES (?, ?, ?, ?, ?, ?)
+                    time_taken,
+                    points_earned,
+                    feedback
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             `, [
-                uuidv4(),
+                detailedResponse.response_id,
                 attempt_id,
                 response.question_id,
                 response.student_answer,
                 isCorrect,
-                response.time_taken
+                response.time_taken,
+                detailedResponse.points_earned,
+                feedback
             ]);
         }
 
@@ -150,8 +173,9 @@ export class QuizSessionService {
         // Update student progress
         await this.updateStudentProgress(session.student_id, session.quiz_id, score);
 
-        return score;
+        return { score, detailedResponses };
     }
+
 
     static async abandonQuizAttempt(attempt_id: string): Promise<void> {
         const session = await this.getQuizAttempt(attempt_id);
@@ -330,4 +354,64 @@ export class QuizSessionService {
         await db.query(sql, values);
 
     }
+
+    static async getQuizSessionDetails(attempt_id: string) {
+        try {
+            // Get the quiz session details
+            const session = await QuizSessionService.getQuizAttempt(attempt_id);
+
+            // First, get the quiz attempt to find the associated questions
+            const [questions]: any = await db.query(`
+                SELECT 
+                    q.*,
+                    qr.student_answer,
+                    qr.is_correct,
+                    qr.time_taken
+                FROM questions q
+                LEFT JOIN question_responses qr 
+                    ON q.question_id = qr.question_id 
+                    AND qr.attempt_id = ?
+                WHERE q.attempt_id = ?
+                ORDER BY q.question_id ASC
+            `, [attempt_id, attempt_id]);
+
+            // Format the response to match frontend expectations
+            const response = {
+                attempt_id: session.attempt_id,
+                quiz_id: session.quiz_id,
+                student_id: session.student_id,
+                start_time: session.start_time,
+                end_time: session.end_time,
+                status: session.status === 'in_progress' ? 'active' : session.status,
+                questions: questions.map((q: any) => ({
+                    question_id: q.question_id,
+                    attempt_id: q.attempt_id,
+                    text: q.text,
+                    type: q.type,
+                    options: q.options ? JSON.parse(q.options) : [],
+                    points: q.points,
+                    student_answer: q.student_answer || null,
+                    is_correct: q.is_correct !== undefined ? q.is_correct : null,
+                    time_taken: q.time_taken || null,
+                    difficulty: q.difficulty,
+                    explanation: q.explanation,
+                    hint: q.hint
+                })),
+                current_question_index: session.current_question_index,
+                remaining_time: session.remaining_time,
+                score: session.score
+            };
+
+            return response;
+        } catch (error) {
+            console.error('Error in getQuizSessionDetails:', error);
+            throw error;
+        }
+    }
+
+    static async getAllQuizzes(): Promise<Quiz[]> {
+        const [rows] = await db.query('SELECT * FROM quizzes');
+        return rows as Quiz[];
+    }
+
 }

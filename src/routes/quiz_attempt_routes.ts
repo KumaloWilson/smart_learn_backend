@@ -1,13 +1,15 @@
 import express from 'express';
-import { QuizController } from '../controllers/quiz_attempt_controller';
+import { QuizSessionController } from '../controllers/quiz_session_controller';
 //import { authenticateStudent } from '../middleware/auth';
 //import { validateQuizSubmission } from '../middlewares/quiz_validation';
 
 const router = express.Router();
 
 // Quiz session routes
-router.post('/start', QuizController.startQuiz);
-router.post('/submit', QuizController.submitQuiz);
+router.post('/start', QuizSessionController.startQuiz);
+router.post('/submit', QuizSessionController.submitQuiz);
+router.get('/current/:attempt_id', QuizSessionController.getQuizSession)
+router.get('/available', QuizSessionController.getAllQuizzes)
 
 // router.get('/attempt/:attempt_id', authenticateStudent, QuizController.getQuizAttempt);
 // router.get('/history/:student_id', authenticateStudent, QuizController.getQuizHistory);
