@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { LecturerService } from '../services/lecturer_service';
 import { UserService } from '../services/user_service';
 import bcrypt from 'bcrypt';
+import {User} from "../models/user";
 
 
 export class LecturerController {
@@ -31,8 +32,6 @@ export class LecturerController {
     static async createLecturer(req: Request, res: Response): Promise<void> {
         try {
             const lecturerData = req.body;
-            const DEFAULT_PASSWORD = "Welcome123!";
-
             // Check if user with email already exists
             const existingUser = await UserService.getUserByUsername(lecturerData.email_address);
 
@@ -44,10 +43,6 @@ export class LecturerController {
             // Create the lecturer profile
             const createdLecturer = await LecturerService.createLecturer(lecturerData);
 
-            // Create corresponding user account for authentication
-
-            const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, 12);
-
 
             if (!createdLecturer) {
                 res.status(500).json({ error: 'Failed to create lecturer profile' });
@@ -56,11 +51,11 @@ export class LecturerController {
 
 
 
-            const userData = {
+            const userData: Partial<User> = {
                 uid: createdLecturer.lecturer_id,
                 username: createdLecturer.email,
-                password: hashedPassword,
-                role: 'lecturer'
+                password: 'Password123?',
+                role: 'admin'
             };
 
             // Create the user account

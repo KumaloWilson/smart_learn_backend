@@ -1,187 +1,103 @@
 import { Request, Response } from 'express';
-import { v4 as uuidv4 } from 'uuid';
-import bcrypt from 'bcrypt';
-import dotenv from 'dotenv';
-import jwt from 'jsonwebtoken';
 import { UserService } from '../services/user_service';
 
-dotenv.config();
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key';
-
 export class UserController {
-    static async getAllUsers(req: Request, res: Response): Promise<void> {
+    static async register(req: Request, res: Response): Promise<void> {
         try {
-            const users = await UserService.getAllUsers();
-            res.json(users);
-        } catch (err) {
-            res.status(500).json({ error: err });
-        }
-    }
+            const {uid, username, password, role } = req.body;
 
-    static async getUserById(req: Request, res: Response): Promise<void> {
-        try {
-            const { uid } = req.params;
-            const user = await UserService.getUserById(uid);
-            if (user) {
-                res.json(user);
-            } else {
-                res.status(404).json({ message: 'User not found' });
-            }
-        } catch (err) {
-            res.status(500).json({ error: err });
-        }
-    }
-
-    static async registerUser(req: Request, res: Response): Promise<void> {
-        try {
-            const { username, password, role } = req.body;
-
+            // Validation
             if (!username || !password || !role) {
-                res.status(400).json({ error: 'Username, password, and role are required' });
+                res.status(400).json({ error: 'All fields are required' });
                 return;
             }
 
-            if (password.length < 8) {
-                res.status(400).json({ error: 'Password must be at least 8 characters long.' });
+            // Password strength validation
+            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+            if (!passwordRegex.test(password)) {
+                res.status(400).json({
+                    error: 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character'
+                });
                 return;
             }
 
             const existingUser = await UserService.getUserByUsername(username);
             if (existingUser) {
-                res.status(400).json({ error: 'Username is already taken.' });
+                res.status(400).json({ error: 'Username already exists' });
                 return;
             }
 
-            const uid = uuidv4();
-            const hashedPassword = await bcrypt.hash(password, 12);
-
-
-
-            const user = await UserService.createUserAuthAccount({ uid, username, role, password: hashedPassword });
+            const user = await UserService.createUserAuthAccount({
+                uid: uid,
+                username,
+                password,
+                role
+            });
 
             res.status(201).json({
-                message: 'User registered successfully.',
-                user: {
-                    uid: user.uid,
-                    username: user.username,
-                    role: user.role,
-                }
+                message: 'User registered successfully',
+                user
             });
         } catch (error) {
             console.error('Registration error:', error);
-            res.status(500).json({ error: 'An error occurred while registering the user.' });
+            res.status(500).json({ error: 'Internal server error' });
         }
     }
 
-
-    static async updateUser(req: Request, res: Response): Promise<void> {
-        try {
-            const { uid } = req.params;
-            const user = req.body;
-            await UserService.updateUser(uid, user);
-            res.json({ message: 'User updated successfully' });
-        } catch (err) {
-            res.status(500).json({ error: err });
-        }
-    }
-
-    static async deleteUser(req: Request, res: Response): Promise<void> {
-        try {
-            const { uid } = req.params;
-            await UserService.deleteUser(uid);
-            res.json({ message: 'User deleted successfully' });
-        } catch (err) {
-            res.status(500).json({ error: err });
-        }
-    }
-
-    static async loginUser(req: Request, res: Response): Promise<void> {
+    static async login(req: Request, res: Response): Promise<void> {
         try {
             const { username, password } = req.body;
 
             if (!username || !password) {
-                res.status(400).json({ error: 'Both username and password are required' });
+                res.status(400).json({ error: 'Username and password are required' });
                 return;
             }
 
-            try {
-                const authResponse = await UserService.authenticateUser(username, password);
+            const authResponse = await UserService.authenticateUser(username, password);
 
-                if (!authResponse) {
-                    res.status(401).json({ error: 'Authentication failed. Please check your credentials.' });
-                    return;
-                }
-
-                const { user, role, profile } = authResponse;
-
-                if (!profile) {
-                    res.status(404).json({ error: `Profile not found for ${role}. Please contact administrator.` });
-                    return;
-                }
-
-                const newToken = jwt.sign(
-                    {
-                        uid: user.username,
-                        role: role
-                    },
-                    JWT_SECRET,
-                    { expiresIn: '1h' }
-                );
-
-                res.status(200).json({
-                    message: 'Login successful',
-                    token: newToken,
-                    profile: profile,
-                });
-
-            } catch (authError: any) {
-                if (authError.message === 'USER_NOT_FOUND') {
-                    res.status(401).json({ error: 'Username not found. Please check your username.' });
-                } else if (authError.message === 'INVALID_PASSWORD') {
-                    res.status(401).json({ error: 'Incorrect password. Please try again.' });
-                } else if (authError.message === 'INVALID_ROLE') {
-                    res.status(400).json({ error: 'Invalid user role. Please contact administrator.' });
-                } else {
-                    res.status(500).json({ error: 'An unexpected error occurred during authentication.' });
-                }
-                return;
-            }
-
-        } catch (error) {
+            res.status(200).json({
+                message: 'Login successful',
+                ...authResponse
+            });
+        } catch (error: any) {
             console.error('Login error:', error);
-            res.status(500).json({ error: 'An unexpected error occurred during login.' });
+
+            const errorMessages: { [key: string]: { status: number, message: string } } = {
+                'USER_NOT_FOUND': { status: 401, message: 'Invalid username or password' },
+                'INVALID_PASSWORD': { status: 401, message: 'Invalid username or password' },
+                'ACCOUNT_LOCKED': { status: 403, message: 'Account is temporarily locked. Please try again later' },
+                'ACCOUNT_DISABLED': { status: 403, message: 'Account is disabled. Please contact support' },
+                'PROFILE_NOT_FOUND': { status: 404, message: 'User profile not found' },
+                'INVALID_ROLE': { status: 400, message: 'Invalid user role' }
+            };
+
+            const errorResponse = errorMessages[error.message] ||
+                { status: 500, message: 'Internal server error' };
+
+            res.status(errorResponse.status).json({ error: errorResponse.message });
         }
     }
 
-    static async verifyPassword(req: Request, res: Response): Promise<void> {
+    static async changePassword(req: Request, res: Response): Promise<void> {
         try {
-            const { password, hash } = req.body;
+            const { uid } = req.params;
+            const { currentPassword, newPassword } = req.body;
 
-            if (!password || !hash) {
-                res.status(400).json({
-                    success: false,
-                    message: 'Password and hash are required'
-                });
-                return;
-            }
+            await UserService.changePassword(uid, currentPassword, newPassword);
 
-            const isMatch = await bcrypt.compare(password, hash);
-            console.log('Password verification result:', isMatch);
+            res.json({ message: 'Password changed successfully' });
+        } catch (error: any) {
+            console.error('Change password error:', error);
 
-            res.status(200).json({
-                success: true,
-                isMatch,
-                message: isMatch ? 'Password matches hash' : 'Password does not match hash'
-            });
+            const errorMessages: { [key: string]: { status: number, message: string } } = {
+                'USER_NOT_FOUND': { status: 404, message: 'User not found' },
+                'INVALID_PASSWORD': { status: 401, message: 'Current password is incorrect' }
+            };
 
-        } catch (error) {
-            console.error('Password verification error:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Error verifying password',
-                error: error
-            });
+            const errorResponse = errorMessages[error.message] ||
+                { status: 500, message: 'Internal server error' };
+
+            res.status(errorResponse.status).json({ error: errorResponse.message });
         }
     }
 }

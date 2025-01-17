@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { AdminService } from '../services/admin_service';
 import { UserService } from '../services/user_service';
 import bcrypt from 'bcrypt';
+import {User} from "../models/user";
 
 export class AdminController {
     static async getAllAdmins(req: Request, res: Response): Promise<void> {
@@ -43,19 +44,17 @@ export class AdminController {
             // Create the admin profile
             const createdAdmin = await AdminService.createAdmin(adminData);
 
-            // Create corresponding user account for authentication
-            const DEFAULT_PASSWORD = "Welcome123!";
-            const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, 12);
+
 
             if (!createdAdmin) {
                 res.status(500).json({ error: 'Failed to create admin profile' });
                 return;
             }
 
-            const userData = {
+            const userData: Partial<User> = {
                 uid: createdAdmin.admin_id,
                 username: createdAdmin.email,
-                password: hashedPassword,
+                password: 'Password123?',
                 role: 'admin'
             };
 

@@ -1,8 +1,11 @@
 export interface User {
     uid: string;
     username: string;
-    role: string;
+    role: 'admin' | 'student' | 'lecturer';
     password: string;
-    created_at?: Date;
-    updated_at?: Date;
+    lastLogin?: Date;
+    passwordChangedAt?: Date;
+    active: boolean;
+    loginAttempts: number;
+    lockUntil?: Date;
 }

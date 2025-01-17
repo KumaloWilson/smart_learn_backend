@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { StudentService } from '../services/student_service';
 import { UserService } from '../services/user_service';
 import bcrypt from 'bcrypt';
+import {User} from "../models/user";
 
 
 export class StudentController {
@@ -45,15 +46,21 @@ export class StudentController {
 
             // Create corresponding user account for authentication
 
-            const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, 12);
-
             if (!createdStudent) {
                 res.status(500).json({ error: 'Failed to create student profile' });
                 return;
             }
 
 
-            await UserService.createUserAuthAccount({ uid: student_id, username: createdStudent.student_id, role: "student", password: hashedPassword });
+            const userData: Partial<User> = {
+                uid: student_id,
+                username: student_id,
+                password: 'Password123?',
+                role: 'student'
+            };
+
+
+            await UserService.createUserAuthAccount(userData);
 
             res.status(201).json({
                 message: 'Student profile and user account created successfully',
