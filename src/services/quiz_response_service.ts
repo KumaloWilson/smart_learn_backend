@@ -1,6 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
 import db from '../config/sql_config';
 import { QuestionResponse } from '../models/quiz_question_response';
+import {QuizResult} from "../models/quiz_result";
+
 
 export class QuizResponseService {
     // Submit a single question response
@@ -69,20 +71,54 @@ export class QuizResponseService {
     }
 
     // Get all responses for a quiz attempt
-    static async getAttemptResponses(attempt_id: string): Promise<QuestionResponse[]> {
+    static async getAttemptResponses(attempt_id: string): Promise<QuizResult> {
+        // Fetch responses for the given attempt
         const [responses]: any = await db.query(`
-            SELECT 
-                r.*,
-                q.correct_answer,
-                q.explanation
-            FROM question_responses r
-            JOIN questions q ON r.question_id = q.question_id
-            WHERE r.attempt_id = ?
-            ORDER BY r.created_at ASC
-        `, [attempt_id]);
+        SELECT 
+            r.question_id,
+            q.text,
+            r.student_answer,
+            q.correct_answer,
+            r.is_correct,
+            r.points_earned,
+            r.time_taken
+        FROM question_responses r
+        JOIN questions q ON r.question_id = q.question_id
+        WHERE r.attempt_id = ?
+        ORDER BY r.created_at ASC
+    `, [attempt_id]);
 
-        return responses;
+        // Fetch overall statistics for the attempt
+        const [statistics]: any = await db.query(`
+        SELECT 
+            COUNT(r.response_id) AS total_questions,
+            SUM(r.is_correct) AS correct_answers,
+            AVG(r.time_taken) AS avg_time_per_question,
+            a.score AS score
+        FROM question_responses r
+        JOIN quiz_attempts a ON r.attempt_id = a.attempt_id
+        WHERE r.attempt_id = ?
+    `, [attempt_id]);
+
+        // Construct the final response structure
+        return {
+            score: statistics[0].score || 0,
+            statistics: {
+                total_questions: statistics[0].total_questions || 0,
+                correct_answers: statistics[0].correct_answers || 0,
+                avg_time_per_question: Math.round(statistics[0].avg_time_per_question || 0),
+            },
+            responses: responses.map((response: any) => ({
+                question_id: response.question_id,
+                text: response.text,
+                student_answer: response.student_answer,
+                correct_answer: response.correct_answer,
+                is_correct: !!response.is_correct,
+                points_earned: response.points_earned || 0,
+            })),
+        };
     }
+
 
     // Calculate attempt statistics
     static async calculateAttemptStatistics(attempt_id: string) {

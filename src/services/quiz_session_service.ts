@@ -233,6 +233,12 @@ export class QuizSessionService {
                     throw new DatabaseError(`Failed to fetch quiz info: ${error.message}`);
                 });
 
+                if (quizInfo && quizInfo.length > 0) {
+                    // Update student progress
+                    await this.updateStudentProgress(session.student_id, session.quiz_id, score);
+                }
+
+
                 const quizResults = { score, detailedResponses };
 
                 console.log(`QUIZ RESULTS : ${quizResults}`);
