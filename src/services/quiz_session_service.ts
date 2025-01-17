@@ -70,126 +70,209 @@ export class QuizSessionService {
     }
 
     static async submitQuizAttempt(attempt_id: string, responses: QuestionResponse[]): Promise<{ score: number, detailedResponses: QuestionResponse[] }> {
-        // Validate attempt exists and is in progress
-        const session = await this.getQuizAttempt(attempt_id);
-        if (session.status !== 'in_progress') {
-            throw new Error('Quiz attempt is not in progress');
-        }
-
-        // Initialize variables
-        let totalPoints = 0;
-        let earnedPoints = 0;
-        const detailedResponses: QuestionResponse[] = [];
-        const misconceptions: { subtopic: string, type: string }[] = [];
-
-        for (const response of responses) {
-            // Modified JOIN query to correctly link tables using available columns
-            const [questionInfo]: any = await db.query(`
-                SELECT q.*, qz.subtopic
-                FROM questions q
-                JOIN quiz_attempts qa ON qa.attempt_id = q.attempt_id
-                JOIN quizzes qz ON qa.quiz_id = qz.quiz_id
-                WHERE q.question_id = ?
-            `, [response.question_id]);
-
-            if (!questionInfo || questionInfo.length === 0) {
-                throw new Error(`Question not found: ${response.question_id}`);
+        try {
+            // Input validation
+            if (!attempt_id || typeof attempt_id !== 'string') {
+                throw new ValidationError('Invalid attempt_id provided');
             }
 
-            const points = questionInfo.points;
-            totalPoints += points;
-            const isCorrect = response.student_answer === questionInfo.correct_answer;
+            if (!Array.isArray(responses) || responses.length === 0) {
+                throw new ValidationError('Responses must be a non-empty array');
+            }
 
-            let feedback = "Incorrect answer.";
-            if (isCorrect) {
-                earnedPoints += points;
-                feedback = "Correct answer!";
-            } else if (questionInfo.misconception) {
-                misconceptions.push({
-                    subtopic: questionInfo.subtopic,
-                    type: questionInfo.misconception
+            // Validate each response object
+            responses.forEach((response, index) => {
+                if (!response.question_id || !response.student_answer || typeof response.time_taken !== 'number') {
+                    throw new ValidationError(`Invalid response data at index ${index}`);
+                }
+                if (response.time_taken < 0) {
+                    throw new ValidationError(`Invalid time_taken value at index ${index}`);
+                }
+            });
+
+            // Validate attempt exists and is in progress
+            const session = await this.getQuizAttempt(attempt_id).catch((error) => {
+                throw new DatabaseError(`Failed to fetch quiz attempt: ${error.message}`);
+            });
+
+            if (!session) {
+                throw new QuizAttemptError('Quiz attempt not found');
+            }
+
+            if (session.status !== 'in_progress') {
+                throw new QuizAttemptError('Quiz attempt is not in progress');
+            }
+
+            // Initialize variables
+            let totalPoints = 0;
+            let earnedPoints = 0;
+            const detailedResponses: QuestionResponse[] = [];
+            const misconceptions: { subtopic: string, type: string }[] = [];
+
+            // Process each response
+            for (const response of responses) {
+                try {
+                    // Fetch question info with error handling
+                    const [questionInfo]: any = await db.query(`
+                    SELECT q.*, qz.subtopic
+                    FROM questions q
+                    JOIN quiz_attempts qa ON qa.attempt_id = q.attempt_id
+                    JOIN quizzes qz ON qa.quiz_id = qz.quiz_id
+                    WHERE q.question_id = ?
+                `, [response.question_id]).catch((error) => {
+                        throw new DatabaseError(`Failed to fetch question info: ${error.message}`);
+                    });
+
+                    if (!questionInfo || questionInfo.length === 0) {
+                        throw new ValidationError(`Question not found: ${response.question_id}`);
+                    }
+
+                    // Before destructuring, log the full questionInfo
+                    console.log('Full questionInfo:', questionInfo);
+
+                    // Modify how we access the data
+                    const questionData = Array.isArray(questionInfo) ? questionInfo[0] : questionInfo;
+                    console.log('Question data:', questionData);
+
+                    const points = Number(questionData.points);
+                    console.log('Points after conversion:', points);
+
+                    if (isNaN(points) || points < 0) {
+                        throw new ValidationError(`Invalid points value for question: ${response.question_id}`);
+                    }
+
+
+                    totalPoints += points;
+
+                    const isCorrect = response.student_answer === questionInfo.correct_answer;
+                    let feedback = "Incorrect answer.";
+
+                    if (isCorrect) {
+                        earnedPoints += points;
+                        feedback = "Correct answer!";
+                    } else if (questionInfo.misconception) {
+                        misconceptions.push({
+                            subtopic: questionInfo.subtopic,
+                            type: questionInfo.misconception
+                        });
+                        feedback += ` Common misconception: ${questionInfo.misconception}.`;
+                    }
+
+                    // Create detailed response
+                    const detailedResponse: QuestionResponse = {
+                        response_id: uuidv4(),
+                        attempt_id,
+                        question_id: response.question_id,
+                        student_answer: response.student_answer,
+                        is_correct: isCorrect,
+                        time_taken: response.time_taken,
+                        points_earned: isCorrect ? points : 0,
+                        feedback,
+                    };
+
+                    detailedResponses.push(detailedResponse);
+
+                    // Insert response with error handling
+                    await db.query(`
+                    INSERT INTO question_responses (
+                        response_id,
+                        attempt_id,
+                        question_id,
+                        student_answer,
+                        is_correct,
+                        time_taken,
+                        points_earned,
+                        feedback
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                `, [
+                        detailedResponse.response_id,
+                        attempt_id,
+                        response.question_id,
+                        response.student_answer,
+                        isCorrect,
+                        response.time_taken,
+                        detailedResponse.points_earned,
+                        feedback
+                    ]).catch((error) => {
+                        throw new DatabaseError(`Failed to insert question response: ${error.message}`);
+                    });
+                } catch (error) {
+                    // Roll back any inserted responses if possible
+                    await this.rollbackResponses(attempt_id, detailedResponses.map(r => r.response_id!))
+                        .catch(rollbackError => console.error('Rollback failed:', rollbackError));
+                    throw error;
+                }
+            }
+
+            if (totalPoints === 0) {
+                throw new ValidationError('No valid points found for quiz questions');
+            }
+
+            const score = (earnedPoints / totalPoints) * 100;
+
+            // Update attempt with error handling
+            try {
+                await db.query(`
+                UPDATE quiz_attempts 
+                SET 
+                    status = 'completed',
+                    score = ?,
+                    end_time = CURRENT_TIMESTAMP
+                WHERE attempt_id = ?
+            `, [score, attempt_id]).catch((error) => {
+                    throw new DatabaseError(`Failed to update quiz attempt: ${error.message}`);
                 });
-                feedback += ` Common misconception: ${questionInfo.misconception}.`;
+
+                // Get quiz info with error handling
+                const [quizInfo]: any = await db.query(`
+                SELECT qz.subtopic, t.topic_id
+                FROM quizzes qz
+                JOIN topics t ON t.course_id = qz.course_id
+                WHERE qz.quiz_id = ?
+            `, [session.quiz_id]).catch((error) => {
+                    throw new DatabaseError(`Failed to fetch quiz info: ${error.message}`);
+                });
+
+                const quizResults = { score, detailedResponses };
+
+                console.log(`QUIZ RESULTS : ${quizResults}`);
+
+                return quizResults;
+            } catch (error) {
+                // Roll back responses on final update failure
+                await this.rollbackResponses(attempt_id, detailedResponses.map(r => r.response_id!))
+                    .catch(rollbackError => console.error('Rollback failed:', rollbackError));
+                throw error;
             }
+        } catch (error) {
+            // Log error for monitoring
+            console.error('Quiz submission error:', error);
 
-            // Record response with additional data
-            const detailedResponse: QuestionResponse = {
-                response_id: uuidv4(),
-                attempt_id,
-                question_id: response.question_id,
-                student_answer: response.student_answer,
-                is_correct: isCorrect,
-                time_taken: response.time_taken,
-                points_earned: isCorrect ? points : 0,
-                feedback,
-            };
-
-            detailedResponses.push(detailedResponse);
-
-            // Insert into the database
-            await db.query(`
-                INSERT INTO question_responses (
-                    response_id,
-                    attempt_id,
-                    question_id,
-                    student_answer,
-                    is_correct,
-                    time_taken,
-                    points_earned,
-                    feedback
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            `, [
-                detailedResponse.response_id,
-                attempt_id,
-                response.question_id,
-                response.student_answer,
-                isCorrect,
-                response.time_taken,
-                detailedResponse.points_earned,
-                feedback
-            ]);
+            // Rethrow with appropriate error type
+            if (error instanceof ValidationError ||
+                error instanceof QuizAttemptError ||
+                error instanceof DatabaseError) {
+                throw error;
+            }
+            throw new Error(`Unexpected error during quiz submission: ${error}`);
         }
-
-        const score = (earnedPoints / totalPoints) * 100;
-
-
-        // Update attempt
-        await db.query(`
-            UPDATE quiz_attempts 
-            SET 
-                status = 'completed',
-                score = ?,
-                end_time = CURRENT_TIMESTAMP
-            WHERE attempt_id = ?
-        `, [score, attempt_id]);
-
-
-        // Track misconceptions
-        for (const misconception of misconceptions) {
-            await LearningAnalyticsService.trackMisconception(
-                session.student_id,
-                misconception.subtopic,
-                misconception.type
-            );
-        }
-
-        // Get quiz and topic information using the correct schema
-        const [quizInfo]: any = await db.query(`
-            SELECT qz.subtopic, t.topic_id
-            FROM quizzes qz
-            JOIN topics t ON t.course_id = qz.course_id
-            WHERE qz.quiz_id = ?
-        `, [session.quiz_id]);
-
-        if (quizInfo && quizInfo.length > 0) {
-            // Update student progress
-            //await this.updateStudentProgress(session.student_id, session.quiz_id, score);
-        }
-
-
-        return { score, detailedResponses };
-
     }
+
+    // Helper method for rolling back responses in case of failure
+    private static async rollbackResponses(attempt_id: string, responseIds: string[]): Promise<void> {
+        if (responseIds.length === 0) return;
+
+        try {
+            await db.query(`
+            DELETE FROM question_responses 
+            WHERE attempt_id = ? AND response_id IN (?)
+        `, [attempt_id, responseIds]);
+        } catch (error) {
+            console.error('Failed to rollback responses:', error);
+            throw new DatabaseError('Failed to rollback responses after error');
+        }
+    }
+
 
     static async abandonQuizAttempt(attempt_id: string): Promise<void> {
         const session = await this.getQuizAttempt(attempt_id);
@@ -427,4 +510,26 @@ export class QuizSessionService {
         return rows as Quiz[];
     }
 
+}
+
+
+class QuizAttemptError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = 'QuizAttemptError';
+    }
+}
+
+class ValidationError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = 'ValidationError';
+    }
+}
+
+class DatabaseError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = 'DatabaseError';
+    }
 }
