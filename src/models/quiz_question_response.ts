@@ -6,6 +6,6 @@ export interface QuestionResponse {
     is_correct: boolean;
     time_taken?: number;
     created_at?: Date;
-    points_earned?: number;  // New field to track points earned per question
-    feedback?: string;       // New field to store specific feedback
+    points_earned?: number;
+    feedback?: string;
 }

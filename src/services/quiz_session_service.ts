@@ -76,39 +76,40 @@ export class QuizSessionService {
             throw new Error('Quiz attempt is not in progress');
         }
 
-        if (session.remaining_time <= 0) {
-            throw new Error('Quiz time has expired');
-        }
-
         // Initialize variables
         let totalPoints = 0;
         let earnedPoints = 0;
         const detailedResponses: QuestionResponse[] = [];
-        const misconceptions: { subtopic_id: string, type: string }[] = [];
+        const misconceptions: { subtopic: string, type: string }[] = [];
 
         for (const response of responses) {
+            // Modified JOIN query to correctly link tables using available columns
             const [questionInfo]: any = await db.query(`
-                SELECT q.*, s.subtopic_id
+                SELECT q.*, qz.subtopic
                 FROM questions q
-                JOIN quizzes qz ON q.quiz_id = qz.quiz_id
-                JOIN subtopics s ON qz.subtopic_id = s.subtopic_id
+                JOIN quiz_attempts qa ON qa.attempt_id = q.attempt_id
+                JOIN quizzes qz ON qa.quiz_id = qz.quiz_id
                 WHERE q.question_id = ?
             `, [response.question_id]);
 
-            const points = questionInfo[0].points;
+            if (!questionInfo || questionInfo.length === 0) {
+                throw new Error(`Question not found: ${response.question_id}`);
+            }
+
+            const points = questionInfo.points;
             totalPoints += points;
-            const isCorrect = response.student_answer === questionInfo[0].correct_answer;
+            const isCorrect = response.student_answer === questionInfo.correct_answer;
 
             let feedback = "Incorrect answer.";
             if (isCorrect) {
                 earnedPoints += points;
                 feedback = "Correct answer!";
-            } else if (questionInfo[0].misconception) {
+            } else if (questionInfo.misconception) {
                 misconceptions.push({
-                    subtopic_id: questionInfo[0].subtopic_id,
-                    type: questionInfo[0].misconception
+                    subtopic: questionInfo.subtopic,
+                    type: questionInfo.misconception
                 });
-                feedback += ` Common misconception: ${questionInfo[0].misconception}.`;
+                feedback += ` Common misconception: ${questionInfo.misconception}.`;
             }
 
             // Record response with additional data
@@ -151,6 +152,7 @@ export class QuizSessionService {
 
         const score = (earnedPoints / totalPoints) * 100;
 
+
         // Update attempt
         await db.query(`
             UPDATE quiz_attempts 
@@ -161,21 +163,33 @@ export class QuizSessionService {
             WHERE attempt_id = ?
         `, [score, attempt_id]);
 
+
         // Track misconceptions
         for (const misconception of misconceptions) {
             await LearningAnalyticsService.trackMisconception(
                 session.student_id,
-                misconception.subtopic_id,
+                misconception.subtopic,
                 misconception.type
             );
         }
 
-        // Update student progress
-        await this.updateStudentProgress(session.student_id, session.quiz_id, score);
+        // Get quiz and topic information using the correct schema
+        const [quizInfo]: any = await db.query(`
+            SELECT qz.subtopic, t.topic_id
+            FROM quizzes qz
+            JOIN topics t ON t.course_id = qz.course_id
+            WHERE qz.quiz_id = ?
+        `, [session.quiz_id]);
+
+        if (quizInfo && quizInfo.length > 0) {
+            // Update student progress
+            //await this.updateStudentProgress(session.student_id, session.quiz_id, score);
+        }
+
 
         return { score, detailedResponses };
-    }
 
+    }
 
     static async abandonQuizAttempt(attempt_id: string): Promise<void> {
         const session = await this.getQuizAttempt(attempt_id);
@@ -310,7 +324,6 @@ export class QuizSessionService {
         return (currentMastery * weightPrevious + newScore * weightNew);
     }
 
-
     static async createQuiz(quiz: Quiz): Promise<void> {
         // Convert arrays to JSON strings before inserting
         const quizData = {
@@ -382,7 +395,7 @@ export class QuizSessionService {
                 student_id: session.student_id,
                 start_time: session.start_time,
                 end_time: session.end_time,
-                status: session.status === 'in_progress' ? 'active' : session.status,
+                status: session.status,
                 questions: questions.map((q: any) => ({
                     question_id: q.question_id,
                     attempt_id: q.attempt_id,

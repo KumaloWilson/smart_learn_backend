@@ -8,8 +8,6 @@ CREATE TABLE IF NOT EXISTS question_responses (
     points_earned INT NOT NULL DEFAULT 0,
     feedback TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (attempt_id) REFERENCES quiz_attempts(attempt_id),
-    FOREIGN KEY (question_id) REFERENCES questions(question_id),
     INDEX idx_attempt_id (attempt_id),
     INDEX idx_question_id (question_id)
 );

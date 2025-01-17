@@ -1,5 +1,5 @@
 
-CREATE TABLE misconception_tracking (
+CREATE TABLE IF NOT EXISTS misconception_tracking (
     tracking_id VARCHAR(36) PRIMARY KEY,
     student_id VARCHAR(36) NOT NULL,
     subtopic_id VARCHAR(36) NOT NULL,
