@@ -29,6 +29,20 @@ export class StudentController {
         }
     }
 
+    static async getStudentProfileByStudentID(req: Request, res: Response): Promise<void> {
+        try {
+            const { student_id } = req.params;
+            const student = await StudentService.getStudentProfileByStudentID(student_id);
+            if (student) {
+                res.json(student);
+            } else {
+                res.status(404).json({ message: 'Student not found' });
+            }
+        } catch (err) {
+            res.status(500).json({ error: err });
+        }
+    }
+
     static async createStudent(req: Request, res: Response): Promise<void> {
         try {
             const studentData = req.body;

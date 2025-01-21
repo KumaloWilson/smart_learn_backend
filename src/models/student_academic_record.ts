@@ -3,7 +3,8 @@ export interface StudentAcademicRecord {
     student_id: string;
     program_id: string;
     academic_year: string;
-    semester: 'fall' | 'spring' | 'summer';
+    semester: '1' | '2';
+    level: string;
     gpa?: number;
     cgpa?: number;
     total_credits_earned?: number;

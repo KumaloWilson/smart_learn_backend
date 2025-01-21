@@ -1,13 +1,13 @@
 import { Admin } from "./admin";
 import { Lecturer } from "./lecturer";
-import { Student } from "./student";
 import { User } from "./user";
+import {StudentAcademicProfile} from "./student_academic_profile";
 
 
 export interface AuthResponse {
     user: Omit<User, 'password'>;
     role: string;
-    profile: Admin | Student | Lecturer | null
+    profile: Admin | StudentAcademicProfile | Lecturer | null
     token: string
 }
 

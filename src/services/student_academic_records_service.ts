@@ -1,5 +1,6 @@
 import db from '../config/sql_config';
 import { StudentAcademicRecord } from '../models/student_academic_record';
+import {Admin} from "../models/admin";
 
 export class StudentAcademicRecordService {
     static async getAllRecords(): Promise<StudentAcademicRecord[]> {
@@ -15,9 +16,11 @@ export class StudentAcademicRecordService {
         return rows[0] || null;
     }
 
-    static async createRecord(data: StudentAcademicRecord): Promise<void> {
+    static async createRecord(data: StudentAcademicRecord): Promise<StudentAcademicRecord | null> {
         const sql = `INSERT INTO student_academic_records SET ?`;
         await db.query(sql, data);
+
+        return  data;
     }
 
     static async updateRecord(record_id: string, data: Partial<StudentAcademicRecord>): Promise<void> {

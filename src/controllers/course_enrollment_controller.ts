@@ -1,56 +1,104 @@
 import { Request, Response } from 'express';
-import { StudentCourseEnrollmentService } from '../services/course_enrollment_service';
+import { StudentCourseService } from '../services/course_enrollment_service';
 
-export class StudentCourseEnrollmentController {
-    static async getAllEnrollments(req: Request, res: Response): Promise<void> {
+export class StudentCourseController {
+    // Get all courses for a student
+    static async getStudentCourses(req: Request, res: Response): Promise<void> {
         try {
-            const enrollments = await StudentCourseEnrollmentService.getAllEnrollments();
-            res.json(enrollments);
+            const { student_id } = req.params;
+            const courses = await StudentCourseService.getStudentCourses(student_id);
+            res.json(courses);
         } catch (err) {
             res.status(500).json({ error: err });
         }
     }
 
-    static async getEnrollmentById(req: Request, res: Response): Promise<void> {
+    // Get current semester courses
+    static async getCurrentEnrolledSemesterCourses(req: Request, res: Response): Promise<void> {
         try {
-            const { enrollment_id } = req.params;
-            const enrollment = await StudentCourseEnrollmentService.getEnrollmentById(enrollment_id);
-            if (enrollment) {
-                res.json(enrollment);
-            } else {
-                res.status(404).json({ message: 'Enrollment not found' });
+            const { student_id } = req.params;
+            const courses = await StudentCourseService.getCurrentEnrolledSemesterCourses(student_id);
+            res.json(courses);
+        } catch (err) {
+            res.status(500).json({ error: err });
+        }
+    }
+
+    // Get course history with grades
+    static async getStudentCourseHistory(req: Request, res: Response): Promise<void> {
+        try {
+            const { student_id } = req.params;
+            const courseHistory = await StudentCourseService.getStudentCourseHistory(student_id);
+            res.json(courseHistory);
+        } catch (err) {
+            res.status(500).json({ error: err });
+        }
+    }
+
+    // Get semester GPA
+    static async getStudentSemesterGPA(req: Request, res: Response): Promise<void> {
+        try {
+            const { student_id, academic_year, semester } = req.params;
+            const gpa = await StudentCourseService.getStudentSemesterGPA(
+                student_id,
+                academic_year,
+                semester
+            );
+            res.json(gpa);
+        } catch (err) {
+            res.status(500).json({ error: err });
+        }
+    }
+
+    // Enroll in a course
+    static async enrollStudentInCourse(req: Request, res: Response): Promise<void> {
+        try {
+            const enrollment = req.body;
+            await StudentCourseService.enrollStudentInCourse(enrollment);
+            res.status(201).json({ message: 'Enrollment successful' });
+        } catch (err) {
+            res.status(500).json({ error: err });
+        }
+    }
+
+    static async bulkEnrollStudentInCourses(req: Request, res: Response): Promise<void> {
+        try {
+            const enrollments = req.body;
+
+            // Validate request body
+            if (!Array.isArray(enrollments) || enrollments.length === 0) {
+                res.status(400).json({
+                    error: true,
+                    message: 'Invalid request body. Expected non-empty array of enrollments'
+                });
+                return;
             }
-        } catch (err) {
-            res.status(500).json({ error: err });
+
+            await StudentCourseService.bulkEnrollInCourses(enrollments);
+            res.status(201).json({ message: 'Bulk enrollment successful' });
+        } catch (err: any) {
+            if (err.message.includes('already enrolled')) {
+                res.status(409).json({
+                    error: true,
+                    message: err.message
+                });
+            } else {
+                console.log(err);
+                res.status(500).json({
+                    error: true,
+                    message: err.message || 'Failed to process bulk enrollment'
+                });
+            }
         }
     }
 
-    static async createEnrollment(req: Request, res: Response): Promise<void> {
-        try {
-            const data = req.body;
-            await StudentCourseEnrollmentService.createEnrollment(data);
-            res.status(201).json({ message: 'Enrollment created successfully' });
-        } catch (err) {
-            res.status(500).json({ error: err });
-        }
-    }
-
+    // Update enrollment
     static async updateEnrollment(req: Request, res: Response): Promise<void> {
         try {
             const { enrollment_id } = req.params;
-            const data = req.body;
-            await StudentCourseEnrollmentService.updateEnrollment(enrollment_id, data);
+            const updates = req.body;
+            await StudentCourseService.updateStudentCourseEnrollment(enrollment_id, updates);
             res.json({ message: 'Enrollment updated successfully' });
-        } catch (err) {
-            res.status(500).json({ error: err });
-        }
-    }
-
-    static async deleteEnrollment(req: Request, res: Response): Promise<void> {
-        try {
-            const { enrollment_id } = req.params;
-            await StudentCourseEnrollmentService.deleteEnrollment(enrollment_id);
-            res.json({ message: 'Enrollment deleted successfully' });
         } catch (err) {
             res.status(500).json({ error: err });
         }

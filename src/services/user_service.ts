@@ -100,7 +100,7 @@ export class UserService {
                     profile = await AdminService.getAdminByUsername(username);
                     break;
                 case 'student':
-                    profile = await StudentService.getStudentByStudentID(username);
+                    profile = await StudentService.getStudentProfileByStudentID(username);
                     break;
                 case 'lecturer':
                     profile = await LecturerService.getLecturerByUsername(username);

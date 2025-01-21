@@ -1,4 +1,4 @@
-CREATE TABLE quizzes (
+CREATE TABLE IF NOT EXISTS quizzes (
     quiz_id VARCHAR(36) PRIMARY KEY,
     course_id VARCHAR(36) NOT NULL,
     topic VARCHAR(255) NOT NULL,

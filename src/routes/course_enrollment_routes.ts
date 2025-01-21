@@ -1,12 +1,17 @@
 import { Router } from 'express';
-import { StudentCourseEnrollmentController } from '../controllers/course_enrollment_controller';
+import { StudentCourseController } from '../controllers/course_enrollment_controller';
 
 const router = Router();
 
-router.get('/', StudentCourseEnrollmentController.getAllEnrollments);
-router.get('/:enrollment_id', StudentCourseEnrollmentController.getEnrollmentById);
-router.post('/', StudentCourseEnrollmentController.createEnrollment);
-router.put('/:enrollment_id', StudentCourseEnrollmentController.updateEnrollment);
-router.delete('/:enrollment_id', StudentCourseEnrollmentController.deleteEnrollment);
+// Course information routes
+router.get('/:student_id/courses', StudentCourseController.getStudentCourses);
+router.get('/:student_id/courses/current', StudentCourseController.getCurrentEnrolledSemesterCourses);
+router.get('/:student_id/courses/history', StudentCourseController.getStudentCourseHistory);
+router.get('/:student_id/gpa/:academic_year/:semester', StudentCourseController.getStudentSemesterGPA);
+
+// Enrollment management routes
+router.post('/enroll', StudentCourseController.enrollStudentInCourse);
+router.post('/bulk-enroll', StudentCourseController.bulkEnrollStudentInCourses);
+router.put('/:enrollment_id', StudentCourseController.updateEnrollment);
 
 export default router;

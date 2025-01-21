@@ -13,11 +13,19 @@ export class CourseService {
     }
 
     static async getCourseByProgramId(program_id: string): Promise<Course[]> {
-        console.log('Fetching courses for program_id:', program_id); // Debugging
         const [rows] = await db.query('SELECT * FROM courses WHERE program_id = ?', [program_id]);
-        console.log('Query result:', rows); // Debugging
         return rows as Course[];
     }
+
+    static async getCoursesByProgramIdAndLevel(program_id: string, level: string): Promise<Course[]> {
+
+        const [rows] = await db.query(
+            'SELECT * FROM courses WHERE program_id = ? AND course_level = ?',
+            [program_id, level]
+        );
+        return rows as Course[];
+    }
+
 
     static async createCourse(course: Course): Promise<void> {
         const sql = `INSERT INTO courses SET ?`;

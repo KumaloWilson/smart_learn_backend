@@ -3,7 +3,7 @@ export interface StudentCourseEnrollment {
     student_id: string;
     course_id: string;
     academic_year: string;
-    semester: 'fall' | 'spring' | 'summer';
+    semester: '1' | '2';
     enrollment_date: string;
     grade?: string;
     grade_points?: number;

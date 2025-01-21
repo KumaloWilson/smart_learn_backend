@@ -39,6 +39,19 @@ export class CourseController {
         }
     }
 
+    static async getCoursesByProgramIdAndLevel(req: Request, res: Response): Promise<void> {
+        try {
+            const { program_id, level } = req.params;
+            console.log('Program ID:', program_id);
+            const courses = await CourseService.getCoursesByProgramIdAndLevel(program_id, level);
+            res.json(courses);
+
+        } catch (err) {
+            console.error(err); // Log any error
+            res.status(500).json({ error: err });
+        }
+    }
+
     static async createCourse(req: Request, res: Response): Promise<void> {
         try {
             const course = req.body;
