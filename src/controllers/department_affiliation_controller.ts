@@ -5,7 +5,11 @@ export class LecturerDepartmentAffiliationController {
     static async getAllAffiliations(req: Request, res: Response): Promise<void> {
         try {
             const affiliations = await LecturerDepartmentAffiliationService.getAllAffiliations();
-            res.json(affiliations);
+            res.json({
+                success: true,
+                message: 'Affiliations retrieved successfully',
+                data: affiliations,
+            });
         } catch (err) {
             res.status(500).json({ error: err });
         }
@@ -16,9 +20,13 @@ export class LecturerDepartmentAffiliationController {
             const { affiliation_id } = req.params;
             const affiliation = await LecturerDepartmentAffiliationService.getAffiliationById(affiliation_id);
             if (affiliation) {
-                res.json(affiliation);
+                res.json({
+                    success: true,
+                    message: 'Affiliation retrieved successfully',
+                    data: affiliation,
+                });
             } else {
-                res.status(404).json({ message: 'Affiliation not found' });
+                res.status(404).json({ success: false, message: 'Affiliation not found' });
             }
         } catch (err) {
             res.status(500).json({ error: err });
@@ -29,7 +37,7 @@ export class LecturerDepartmentAffiliationController {
         try {
             const data = req.body;
             await LecturerDepartmentAffiliationService.createAffiliation(data);
-            res.status(201).json({ message: 'Affiliation created successfully' });
+            res.status(201).json({success: true, message: 'Affiliation created successfully' });
         } catch (err) {
             res.status(500).json({ error: err });
         }
@@ -40,7 +48,7 @@ export class LecturerDepartmentAffiliationController {
             const { affiliation_id } = req.params;
             const data = req.body;
             await LecturerDepartmentAffiliationService.updateAffiliation(affiliation_id, data);
-            res.json({ message: 'Affiliation updated successfully' });
+            res.json({success: true, message: 'Affiliation updated successfully' });
         } catch (err) {
             res.status(500).json({ error: err });
         }
@@ -50,7 +58,7 @@ export class LecturerDepartmentAffiliationController {
         try {
             const { affiliation_id } = req.params;
             await LecturerDepartmentAffiliationService.deleteAffiliation(affiliation_id);
-            res.json({ message: 'Affiliation deleted successfully' });
+            res.json({success: true, message: 'Affiliation deleted successfully' });
         } catch (err) {
             res.status(500).json({ error: err });
         }
