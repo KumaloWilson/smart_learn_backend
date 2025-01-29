@@ -14,6 +14,7 @@ export class QuizResponseController {
 
             res.json({
                 success: true,
+                message: 'Successfully submitted',
                 data: response
             });
         } catch (error: any) {
@@ -32,6 +33,7 @@ export class QuizResponseController {
 
             res.json({
                 success: true,
+                message: 'Successfully submitted',
                 data: {
                     score,
                     statistics
