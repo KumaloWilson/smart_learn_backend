@@ -5,9 +5,9 @@ export class ProgramController {
     static async getAllPrograms(req: Request, res: Response): Promise<void> {
         try {
             const programs = await ProgramService.getAllPrograms();
-            res.json(programs);
-        } catch (err) {
-            res.status(500).json({ error: err });
+            res.json({ success: true, data: programs, message: 'Programs retrieved successfully' });
+        } catch (err: any) {
+            res.status(500).json({ success: false, data: null, message: err.message || 'An error occurred' });
         }
     }
 
@@ -16,12 +16,12 @@ export class ProgramController {
             const { program_id } = req.params;
             const program = await ProgramService.getProgramById(program_id);
             if (program) {
-                res.json(program);
+                res.json({ success: true, data: program, message: 'Program retrieved successfully' });
             } else {
-                res.status(404).json({ message: 'Program not found' });
+                res.status(404).json({ success: false, data: null, message: 'Program not found' });
             }
-        } catch (err) {
-            res.status(500).json({ error: err });
+        } catch (err: any) {
+            res.status(500).json({ success: false, data: null, message: err.message || 'An error occurred' });
         }
     }
 
@@ -31,25 +31,23 @@ export class ProgramController {
             console.log('School ID:', school_id);
             const programs = await ProgramService.getProgramsBySchoolId(school_id);
             if (programs.length === 0) {
-                res.status(404).json({ message: 'No programs found for the given school ID.' });
+                res.status(404).json({ success: false, data: null, message: 'No programs found for the given school ID.' });
+            } else {
+                res.json({ success: true, data: programs, message: 'Programs retrieved successfully' });
             }
-            res.json(programs);
-
-        } catch (err) {
-            console.error(err); // Log any error
-            res.status(500).json({ error: err });
+        } catch (err: any) {
+            console.error(err);
+            res.status(500).json({ success: false, data: null, message: err.message || 'An error occurred' });
         }
     }
-
-
 
     static async createProgram(req: Request, res: Response): Promise<void> {
         try {
             const program = req.body;
             await ProgramService.createProgram(program);
-            res.status(201).json({ message: 'Program created successfully' });
-        } catch (err) {
-            res.status(500).json({ error: err });
+            res.status(201).json({ success: true, data: null, message: 'Program created successfully' });
+        } catch (err: any) {
+            res.status(500).json({ success: false, data: null, message: err.message || 'An error occurred' });
         }
     }
 
@@ -58,9 +56,9 @@ export class ProgramController {
             const { program_id } = req.params;
             const program = req.body;
             await ProgramService.updateProgram(program_id, program);
-            res.json({ message: 'Program updated successfully' });
-        } catch (err) {
-            res.status(500).json({ error: err });
+            res.json({ success: true, data: null, message: 'Program updated successfully' });
+        } catch (err: any) {
+            res.status(500).json({ success: false, data: null, message: err.message || 'An error occurred' });
         }
     }
 
@@ -68,9 +66,9 @@ export class ProgramController {
         try {
             const { program_id } = req.params;
             await ProgramService.deleteProgram(program_id);
-            res.json({ message: 'Program deleted successfully' });
-        } catch (err) {
-            res.status(500).json({ error: err });
+            res.json({ success: true, data: null, message: 'Program deleted successfully' });
+        } catch (err: any) {
+            res.status(500).json({ success: false, data: null, message: err.message || 'An error occurred' });
         }
     }
 }
