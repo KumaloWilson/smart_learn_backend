@@ -6,9 +6,17 @@ export class QuizSessionController {
         try {
             const { student_id, quiz } = req.body;
             const attempt = await QuizSessionService.startQuizAttempt(student_id, quiz);
-            res.json({ attempt });
+            res.json({
+                success: true,
+                data: attempt,
+                message: 'Quiz attempt started successfully.'
+            });
         } catch (error: any) {
-            res.status(400).json({ error: error.message });
+            res.status(400).json({
+                success: false,
+                data: null,
+                message: error.message
+            });
         }
     }
 
@@ -19,7 +27,9 @@ export class QuizSessionController {
             // Validate request body
             if (!attempt_id || !responses || !Array.isArray(responses)) {
                 return res.status(400).json({
-                    error: 'Invalid request body. Required: attempt_id and responses array'
+                    success: false,
+                    data: null,
+                    message: 'Invalid request body. Required: attempt_id and responses array'
                 });
             }
 
@@ -27,7 +37,9 @@ export class QuizSessionController {
             for (const response of responses) {
                 if (!response.question_id || !response.student_answer) {
                     return res.status(400).json({
-                        error: 'Each response must have question_id and student_answer'
+                        success: false,
+                        data: null,
+                        message: 'Each response must have question_id and student_answer'
                     });
                 }
 
@@ -50,14 +62,18 @@ export class QuizSessionController {
                 data: {
                     score,
                     detailedResponses
-                }
+                },
+                message: 'Quiz submitted successfully.'
             });
         } catch (error: any) {
             console.error('Quiz submission error:', error);
-            res.status(400).json({ error: error.message });
+            res.status(400).json({
+                success: false,
+                data: null,
+                message: error.message
+            });
         }
     }
-
 
     static async getQuizSession(req: Request, res: Response) {
         const { attempt_id } = req.params;
@@ -67,12 +83,14 @@ export class QuizSessionController {
 
             return res.status(200).json({
                 success: true,
-                data: response
+                data: response,
+                message: 'Quiz session details fetched successfully.'
             });
         } catch (error) {
             console.error('Error in getQuizSession:', error);
             return res.status(500).json({
                 success: false,
+                data: null,
                 message: error instanceof Error ? error.message : 'Failed to fetch quiz session'
             });
         }
@@ -81,9 +99,17 @@ export class QuizSessionController {
     static async getAllQuizzes(req: Request, res: Response): Promise<void> {
         try {
             const quizzes = await QuizSessionService.getAllQuizzes();
-            res.json(quizzes);
+            res.json({
+                success: true,
+                data: quizzes,
+                message: 'All quizzes retrieved successfully.'
+            });
         } catch (err) {
-            res.status(500).json({ error: err });
+            res.status(500).json({
+                success: false,
+                data: null,
+                message: 'Failed to retrieve quizzes.'
+            });
         }
     }
 }
