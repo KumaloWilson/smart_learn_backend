@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { QuestionGenerationService } from '../services/quiz_generation_service';
 
 export class QuestionGenerationController {
-    static async generateQuestions(req: Request, res: Response) {
+    static async generateQuestions(req: Request, res: Response): Promise<void> {
         try {
             const {
                 topic,
@@ -21,10 +21,10 @@ export class QuestionGenerationController {
                 { subtopic, learningObjectives, previousQuestions }
             );
 
-            res.status(201).json({ questions });
+            res.status(201).json({ success: true, data: questions, message: 'Questions generated successfully' });
         } catch (error: any) {
             console.log(error.message);
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ success: false, data: null, message: error.message || 'An error occurred' });
         }
     }
 }
