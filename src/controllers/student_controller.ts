@@ -2,16 +2,23 @@ import { Request, Response } from 'express';
 import { StudentService } from '../services/student_service';
 import { UserService } from '../services/user_service';
 import bcrypt from 'bcrypt';
-import {User} from "../models/user";
-
+import { User } from "../models/user";
 
 export class StudentController {
     static async getAllStudents(req: Request, res: Response): Promise<void> {
         try {
             const students = await StudentService.getAllStudents();
-            res.json(students);
+            res.json({
+                success: true,
+                data: students,
+                message: 'All students retrieved successfully.'
+            });
         } catch (err) {
-            res.status(500).json({ error: err });
+            res.status(500).json({
+                success: false,
+                data: null,
+                message: 'Failed to retrieve students.',
+            });
         }
     }
 
@@ -20,12 +27,24 @@ export class StudentController {
             const { student_id } = req.params;
             const student = await StudentService.getStudentByStudentID(student_id);
             if (student) {
-                res.json(student);
+                res.json({
+                    success: true,
+                    data: student,
+                    message: 'Student retrieved successfully.'
+                });
             } else {
-                res.status(404).json({ message: 'Student not found' });
+                res.status(404).json({
+                    success: false,
+                    data: null,
+                    message: 'Student not found.'
+                });
             }
         } catch (err) {
-            res.status(500).json({ error: err });
+            res.status(500).json({
+                success: false,
+                data: null,
+                message: 'Failed to retrieve student.',
+            });
         }
     }
 
@@ -34,12 +53,24 @@ export class StudentController {
             const { student_id } = req.params;
             const student = await StudentService.getStudentProfileByStudentID(student_id);
             if (student) {
-                res.json(student);
+                res.json({
+                    success: true,
+                    data: student,
+                    message: 'Student profile retrieved successfully.'
+                });
             } else {
-                res.status(404).json({ message: 'Student not found' });
+                res.status(404).json({
+                    success: false,
+                    data: null,
+                    message: 'Student profile not found.'
+                });
             }
         } catch (err) {
-            res.status(500).json({ error: err });
+            res.status(500).json({
+                success: false,
+                data: null,
+                message: 'Failed to retrieve student profile.',
+            });
         }
     }
 
@@ -51,7 +82,11 @@ export class StudentController {
             // Check if user with email already exists
             const existingUser = await UserService.getUserByUsername(student_id);
             if (existingUser) {
-                res.status(400).json({ error: 'User with the same email already exists' });
+                res.status(400).json({
+                    success: false,
+                    data: null,
+                    message: 'User with the same email already exists.'
+                });
                 return;
             }
 
@@ -59,12 +94,14 @@ export class StudentController {
             const createdStudent = await StudentService.createStudent(studentData);
 
             // Create corresponding user account for authentication
-
             if (!createdStudent) {
-                res.status(500).json({ error: 'Failed to create student profile' });
+                res.status(500).json({
+                    success: false,
+                    data: null,
+                    message: 'Failed to create student profile.'
+                });
                 return;
             }
-
 
             const userData: Partial<User> = {
                 uid: student_id,
@@ -73,23 +110,26 @@ export class StudentController {
                 role: 'student'
             };
 
-
             await UserService.createUserAuthAccount(userData);
 
             res.status(201).json({
-                message: 'Student profile and user account created successfully',
-                student: createdStudent,
-                userAccount: {
-                    uid: student_id,
-                    username: createdStudent.student_id,
-                    role: 'student',
+                success: true,
+                data: {
+                    student: createdStudent,
+                    userAccount: {
+                        uid: student_id,
+                        username: createdStudent.student_id,
+                        role: 'student',
+                    }
                 },
+                message: 'Student profile and user account created successfully.'
             });
-
         } catch (err) {
             console.error('Error creating student and user account:', err);
             res.status(500).json({
-                error: 'Failed to create student and associated user account',
+                success: false,
+                data: null,
+                message: 'Failed to create student and associated user account.',
                 details: err
             });
         }
@@ -100,9 +140,17 @@ export class StudentController {
             const { student_id } = req.params;
             const student = req.body;
             await StudentService.updateStudent(student_id, student);
-            res.json({ message: 'Student updated successfully' });
+            res.json({
+                success: true,
+                data: null,
+                message: 'Student updated successfully.'
+            });
         } catch (err) {
-            res.status(500).json({ error: err });
+            res.status(500).json({
+                success: false,
+                data: null,
+                message: 'Failed to update student.',
+            });
         }
     }
 
@@ -110,9 +158,17 @@ export class StudentController {
         try {
             const { student_id } = req.params;
             await StudentService.deleteStudent(student_id);
-            res.json({ message: 'Student deleted successfully' });
+            res.json({
+                success: true,
+                data: null,
+                message: 'Student deleted successfully.'
+            });
         } catch (err) {
-            res.status(500).json({ error: err });
+            res.status(500).json({
+                success: false,
+                data: null,
+                message: 'Failed to delete student.',
+            });
         }
     }
 }
