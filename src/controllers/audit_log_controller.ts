@@ -16,7 +16,11 @@ export class AuditLogController {
             const { log_id } = req.params;
             const log = await AuditLogService.getAuditLogById(log_id);
             if (log) {
-                res.json(log);
+                res.json({
+                    success: true,
+                    message: 'Audit log found successfully',
+                    data: log
+                });
             } else {
                 res.status(404).json({ message: 'Audit log not found' });
             }
@@ -29,7 +33,7 @@ export class AuditLogController {
         try {
             const data = req.body;
             await AuditLogService.createAuditLog(data);
-            res.status(201).json({ message: 'Audit log created successfully' });
+            res.status(201).json({ success: true, message: 'Audit log created successfully' });
         } catch (err) {
             res.status(500).json({ error: err });
         }
@@ -40,7 +44,7 @@ export class AuditLogController {
             const { log_id } = req.params;
             const data = req.body;
             await AuditLogService.updateAuditLog(log_id, data);
-            res.json({ message: 'Audit log updated successfully' });
+            res.json({ success: true, message: 'Audit log updated successfully' });
         } catch (err) {
             res.status(500).json({ error: err });
         }
@@ -50,7 +54,7 @@ export class AuditLogController {
         try {
             const { log_id } = req.params;
             await AuditLogService.deleteAuditLog(log_id);
-            res.json({ message: 'Audit log deleted successfully' });
+            res.json({success: true, message: 'Audit log deleted successfully' });
         } catch (err) {
             res.status(500).json({ error: err });
         }

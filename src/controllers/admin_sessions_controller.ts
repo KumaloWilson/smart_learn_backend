@@ -16,7 +16,11 @@ export class AdminSessionController {
             const { session_id } = req.params;
             const session = await AdminSessionService.getAdminSessionById(session_id);
             if (session) {
-                res.json(session);
+                res.json({
+                    success: true,
+                    message: 'Admin session found',
+                    data: session
+                });
             } else {
                 res.status(404).json({ message: 'Session not found' });
             }
@@ -29,7 +33,7 @@ export class AdminSessionController {
         try {
             const data = req.body;
             await AdminSessionService.createAdminSession(data);
-            res.status(201).json({ message: 'Admin session created successfully' });
+            res.status(201).json({ success: true, message: 'Admin session created successfully' });
         } catch (err) {
             res.status(500).json({ error: err });
         }
@@ -40,7 +44,7 @@ export class AdminSessionController {
             const { session_id } = req.params;
             const data = req.body;
             await AdminSessionService.updateAdminSession(session_id, data);
-            res.json({ message: 'Admin session updated successfully' });
+            res.json({ success: true, message: 'Admin session updated successfully' });
         } catch (err) {
             res.status(500).json({ error: err });
         }
@@ -50,7 +54,7 @@ export class AdminSessionController {
         try {
             const { session_id } = req.params;
             await AdminSessionService.deleteAdminSession(session_id);
-            res.json({ message: 'Admin session deleted successfully' });
+            res.json({success: true, message: 'Admin session deleted successfully' });
         } catch (err) {
             res.status(500).json({ error: err });
         }

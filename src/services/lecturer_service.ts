@@ -13,7 +13,7 @@ export class LecturerService {
     }
 
     static async getLecturerByUsername(username: string): Promise<Lecturer | null> {
-        const [rows]: any = await db.query('SELECT * FROM lecturers WHERE email_address = ?', [username]);
+        const [rows]: any = await db.query('SELECT * FROM lecturers WHERE email = ?', [username]);
         return rows[0] || null;
     }
 

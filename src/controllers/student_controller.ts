@@ -47,7 +47,7 @@ export class StudentController {
         try {
             const studentData = req.body;
             const student_id = studentData.student_id;
-            const DEFAULT_PASSWORD = "DefaultPassword";
+
             // Check if user with email already exists
             const existingUser = await UserService.getUserByUsername(student_id);
             if (existingUser) {

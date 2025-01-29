@@ -9,7 +9,13 @@ export class LecturerController {
     static async getAllLecturers(req: Request, res: Response): Promise<void> {
         try {
             const lecturers = await LecturerService.getAllLecturers();
-            res.json(lecturers);
+            res.json(
+                {
+                    success: true,
+                    message: 'Lecturer profile and user account created successfully',
+                    data: lecturers,
+                }
+            );
         } catch (err) {
             res.status(500).json({ error: err });
         }
@@ -20,7 +26,13 @@ export class LecturerController {
             const { lecturer_id } = req.params;
             const lecturer = await LecturerService.getLecturerByUID(lecturer_id);
             if (lecturer) {
-                res.json(lecturer);
+                res.json(
+                    {
+                        success: true,
+                        message: 'Lecturer profile and user account created successfully',
+                        data: lecturer,
+                    }
+                );
             } else {
                 res.status(404).json({ message: 'Lecturer not found' });
             }
@@ -55,13 +67,14 @@ export class LecturerController {
                 uid: createdLecturer.lecturer_id,
                 username: createdLecturer.email,
                 password: 'Password123?',
-                role: 'admin'
+                role: 'lecturer'
             };
 
             // Create the user account
             await UserService.createUserAuthAccount(userData);
 
             res.status(201).json({
+                success: true,
                 message: 'Lecturer profile and user account created successfully',
                 lecturer: createdLecturer,
                 userAccount: {
@@ -85,7 +98,12 @@ export class LecturerController {
             const { lecturer_id } = req.params;
             const lecturer = req.body;
             await LecturerService.updateLecturer(lecturer_id, lecturer);
-            res.json({ message: 'Lecturer updated successfully' });
+            res.json(
+                {
+                    success: true,
+                    message: 'Lecturer updated successfully'
+                }
+            );
         } catch (err) {
             res.status(500).json({ error: err });
         }
@@ -95,7 +113,12 @@ export class LecturerController {
         try {
             const { lecturer_id } = req.params;
             await LecturerService.deleteLecturer(lecturer_id);
-            res.json({ message: 'Lecturer deleted successfully' });
+            res.json(
+                {
+                    success: true,
+                    message: 'Lecturer deleted successfully'
+                }
+                );
         } catch (err) {
             res.status(500).json({ error: err });
         }

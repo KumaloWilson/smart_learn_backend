@@ -36,7 +36,10 @@ export class AdminController {
             const existingUser = await UserService.getUserByUsername(adminData.email);
 
             if (existingUser) {
-                res.status(400).json({ error: 'User with the same email already exists' });
+                res.status(400).json({
+                    success: false,
+                    error: 'User with the same email already exists'
+                });
                 return;
             }
 
@@ -63,6 +66,7 @@ export class AdminController {
             await UserService.createUserAuthAccount(userData);
 
             res.status(201).json({
+                success: true,
                 message: 'Admin profile and user account created successfully',
                 admin: createdAdmin,
                 userAccount: {
@@ -86,7 +90,7 @@ export class AdminController {
             const { id } = req.params;
             const admin = req.body;
             await AdminService.updateAdmin(parseInt(id), admin);
-            res.json({ message: 'Admin updated successfully' });
+            res.json({ success: true, message: 'Admin updated successfully' });
         } catch (err) {
             res.status(500).json({ error: err });
         }
@@ -96,7 +100,7 @@ export class AdminController {
         try {
             const { id } = req.params;
             await AdminService.deleteAdmin(parseInt(id));
-            res.json({ message: 'Admin deleted successfully' });
+            res.json({ success: true, message: 'Admin deleted successfully' });
         } catch (err) {
             res.status(500).json({ error: err });
         }

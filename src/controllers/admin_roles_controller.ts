@@ -18,7 +18,7 @@ export class AdminRoleController {
             if (role) {
                 res.json(role);
             } else {
-                res.status(404).json({ message: 'Role not found' });
+                res.status(404).json({ success: false, message: 'Role not found' });
             }
         } catch (err) {
             res.status(500).json({ error: err });
@@ -29,7 +29,7 @@ export class AdminRoleController {
         try {
             const data = req.body;
             await AdminRoleService.createRole(data);
-            res.status(201).json({ message: 'Role created successfully' });
+            res.status(201).json({ success: true, message: 'Role created successfully' });
         } catch (err) {
             res.status(500).json({ error: err });
         }
@@ -40,7 +40,7 @@ export class AdminRoleController {
             const { role_id } = req.params;
             const data = req.body;
             await AdminRoleService.updateRole(role_id, data);
-            res.json({ message: 'Role updated successfully' });
+            res.json({ success: true, message: 'Role updated successfully' });
         } catch (err) {
             res.status(500).json({ error: err });
         }
@@ -50,7 +50,7 @@ export class AdminRoleController {
         try {
             const { role_id } = req.params;
             await AdminRoleService.deleteRole(role_id);
-            res.json({ message: 'Role deleted successfully' });
+            res.json({ success: true, message: 'Role deleted successfully' });
         } catch (err) {
             res.status(500).json({ error: err });
         }

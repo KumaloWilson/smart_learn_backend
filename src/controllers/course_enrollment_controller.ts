@@ -7,7 +7,11 @@ export class StudentCourseController {
         try {
             const { student_id } = req.params;
             const courses = await StudentCourseService.getStudentCourses(student_id);
-            res.json(courses);
+            res.json({
+               success: true,
+                message: 'Student courses found successfully',
+                data: courses
+            });
         } catch (err) {
             res.status(500).json({ error: err });
         }
@@ -18,7 +22,11 @@ export class StudentCourseController {
         try {
             const { student_id } = req.params;
             const courses = await StudentCourseService.getCurrentEnrolledSemesterCourses(student_id);
-            res.json(courses);
+            res.json({
+                success: true,
+                message: 'Enrolled courses found successfully',
+                data: courses
+            });
         } catch (err) {
             res.status(500).json({ error: err });
         }
@@ -29,7 +37,11 @@ export class StudentCourseController {
         try {
             const { student_id } = req.params;
             const courseHistory = await StudentCourseService.getStudentCourseHistory(student_id);
-            res.json(courseHistory);
+            res.json({
+                success: true,
+                message: 'Student courses history found successfully',
+                data: courseHistory
+            });
         } catch (err) {
             res.status(500).json({ error: err });
         }
@@ -44,7 +56,11 @@ export class StudentCourseController {
                 academic_year,
                 semester
             );
-            res.json(gpa);
+            res.json( res.json({
+                success: true,
+                message: 'Student courses found successfully',
+                data: gpa
+            });
         } catch (err) {
             res.status(500).json({ error: err });
         }
