@@ -56,7 +56,7 @@ export class StudentCourseController {
                 academic_year,
                 semester
             );
-            res.json( res.json({
+            res.json({
                 success: true,
                 message: 'Student courses found successfully',
                 data: gpa
@@ -71,7 +71,7 @@ export class StudentCourseController {
         try {
             const enrollment = req.body;
             await StudentCourseService.enrollStudentInCourse(enrollment);
-            res.status(201).json({ message: 'Enrollment successful' });
+            res.status(201).json({success: true, message: 'Enrollment successful' });
         } catch (err) {
             res.status(500).json({ error: err });
         }
@@ -84,7 +84,7 @@ export class StudentCourseController {
             // Validate request body
             if (!Array.isArray(enrollments) || enrollments.length === 0) {
                 res.status(400).json({
-                    error: true,
+                    success: false,
                     message: 'Invalid request body. Expected non-empty array of enrollments'
                 });
                 return;
@@ -95,13 +95,13 @@ export class StudentCourseController {
         } catch (err: any) {
             if (err.message.includes('already enrolled')) {
                 res.status(409).json({
-                    error: true,
+                    success: false,
                     message: err.message
                 });
             } else {
                 console.log(err);
                 res.status(500).json({
-                    error: true,
+                    success: false,
                     message: err.message || 'Failed to process bulk enrollment'
                 });
             }
@@ -114,7 +114,7 @@ export class StudentCourseController {
             const { enrollment_id } = req.params;
             const updates = req.body;
             await StudentCourseService.updateStudentCourseEnrollment(enrollment_id, updates);
-            res.json({ message: 'Enrollment updated successfully' });
+            res.json({success: true, message: 'Enrollment updated successfully' });
         } catch (err) {
             res.status(500).json({ error: err });
         }
