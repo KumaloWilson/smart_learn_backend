@@ -5,9 +5,17 @@ export class SchoolController {
     static async getAllSchools(req: Request, res: Response): Promise<void> {
         try {
             const schools = await SchoolService.getAllSchools();
-            res.json(schools);
+            res.json({
+                success: true,
+                data: schools,
+                message: 'All schools retrieved successfully.'
+            });
         } catch (err) {
-            res.status(500).json({ error: err });
+            res.status(500).json({
+                success: false,
+                data: null,
+                message: 'Failed to retrieve schools.'
+            });
         }
     }
 
@@ -16,12 +24,24 @@ export class SchoolController {
             const { school_id } = req.params;
             const school = await SchoolService.getSchoolById(school_id);
             if (school) {
-                res.json(school);
+                res.json({
+                    success: true,
+                    data: school,
+                    message: 'School retrieved successfully.'
+                });
             } else {
-                res.status(404).json({ message: 'School not found' });
+                res.status(404).json({
+                    success: false,
+                    data: null,
+                    message: 'School not found.'
+                });
             }
         } catch (err) {
-            res.status(500).json({ error: err });
+            res.status(500).json({
+                success: false,
+                data: null,
+                message: 'Failed to retrieve school.'
+            });
         }
     }
 
@@ -29,9 +49,17 @@ export class SchoolController {
         try {
             const school = req.body;
             await SchoolService.createSchool(school);
-            res.status(201).json({ message: 'School created successfully' });
+            res.status(201).json({
+                success: true,
+                data: null,
+                message: 'School created successfully.'
+            });
         } catch (err) {
-            res.status(500).json({ error: err });
+            res.status(500).json({
+                success: false,
+                data: null,
+                message: 'Failed to create school.'
+            });
         }
     }
 
@@ -40,9 +68,17 @@ export class SchoolController {
             const { school_id } = req.params;
             const school = req.body;
             await SchoolService.updateSchool(school_id, school);
-            res.json({ message: 'School updated successfully' });
+            res.json({
+                success: true,
+                data: null,
+                message: 'School updated successfully.'
+            });
         } catch (err) {
-            res.status(500).json({ error: err });
+            res.status(500).json({
+                success: false,
+                data: null,
+                message: 'Failed to update school.'
+            });
         }
     }
 
@@ -50,9 +86,17 @@ export class SchoolController {
         try {
             const { school_id } = req.params;
             await SchoolService.deleteSchool(school_id);
-            res.json({ message: 'School deleted successfully' });
+            res.json({
+                success: true,
+                data: null,
+                message: 'School deleted successfully.'
+            });
         } catch (err) {
-            res.status(500).json({ error: err });
+            res.status(500).json({
+                success: false,
+                data: null,
+                message: 'Failed to delete school.'
+            });
         }
     }
 }
