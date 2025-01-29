@@ -5,9 +5,18 @@ export class StudentDocumentController {
     static async getAllDocuments(req: Request, res: Response): Promise<void> {
         try {
             const documents = await StudentDocumentService.getAllDocuments();
-            res.json(documents);
+            res.json({
+                success: true,
+                data: documents,
+                message: 'All documents retrieved successfully.'
+            });
         } catch (err) {
-            res.status(500).json({ error: err });
+            res.status(500).json({
+                success: false,
+                data: null,
+                message: 'Failed to retrieve documents.',
+                error: err
+            });
         }
     }
 
@@ -16,12 +25,25 @@ export class StudentDocumentController {
             const { document_id } = req.params;
             const document = await StudentDocumentService.getDocumentById(document_id);
             if (document) {
-                res.json(document);
+                res.json({
+                    success: true,
+                    data: document,
+                    message: 'Document retrieved successfully.'
+                });
             } else {
-                res.status(404).json({ message: 'Document not found' });
+                res.status(404).json({
+                    success: false,
+                    data: null,
+                    message: 'Document not found.'
+                });
             }
         } catch (err) {
-            res.status(500).json({ error: err });
+            res.status(500).json({
+                success: false,
+                data: null,
+                message: 'Failed to retrieve document.',
+                error: err
+            });
         }
     }
 
@@ -29,9 +51,18 @@ export class StudentDocumentController {
         try {
             const data = req.body;
             await StudentDocumentService.createDocument(data);
-            res.status(201).json({ message: 'Document created successfully' });
+            res.status(201).json({
+                success: true,
+                data: null,
+                message: 'Document created successfully.'
+            });
         } catch (err) {
-            res.status(500).json({ error: err });
+            res.status(500).json({
+                success: false,
+                data: null,
+                message: 'Failed to create document.',
+                error: err
+            });
         }
     }
 
@@ -40,9 +71,18 @@ export class StudentDocumentController {
             const { document_id } = req.params;
             const data = req.body;
             await StudentDocumentService.updateDocument(document_id, data);
-            res.json({ message: 'Document updated successfully' });
+            res.json({
+                success: true,
+                data: null,
+                message: 'Document updated successfully.'
+            });
         } catch (err) {
-            res.status(500).json({ error: err });
+            res.status(500).json({
+                success: false,
+                data: null,
+                message: 'Failed to update document.',
+                error: err
+            });
         }
     }
 
@@ -50,9 +90,18 @@ export class StudentDocumentController {
         try {
             const { document_id } = req.params;
             await StudentDocumentService.deleteDocument(document_id);
-            res.json({ message: 'Document deleted successfully' });
+            res.json({
+                success: true,
+                data: null,
+                message: 'Document deleted successfully.'
+            });
         } catch (err) {
-            res.status(500).json({ error: err });
+            res.status(500).json({
+                success: false,
+                data: null,
+                message: 'Failed to delete document.',
+                error: err
+            });
         }
     }
 }
