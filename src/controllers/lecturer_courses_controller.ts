@@ -5,7 +5,14 @@ export class LecturerCourseAssignmentController {
     static async getAllAssignments(req: Request, res: Response): Promise<void> {
         try {
             const assignments = await LecturerCourseAssignmentService.getAllAssignments();
-            res.json(assignments);
+            res.json(
+                {
+                    success: true,
+                    message: 'Assignments successfully retrieved',
+                    data: assignments,
+
+                }
+            );
         } catch (err) {
             res.status(500).json({ error: err });
         }
@@ -15,7 +22,12 @@ export class LecturerCourseAssignmentController {
         try {
             const { lecturer_id } = req.params;
             const assignments = await LecturerCourseAssignmentService.getAssignmentsByLecturerId(lecturer_id);
-            res.json(assignments);
+            res.json({
+                success: true,
+                message: 'Assignments successfully retrieved',
+                data: assignments,
+
+            });
         } catch (err) {
             res.status(500).json({ error: err });
         }
@@ -26,7 +38,12 @@ export class LecturerCourseAssignmentController {
             const { assignment_id } = req.params;
             const assignment = await LecturerCourseAssignmentService.getAssignmentById(assignment_id);
             if (assignment) {
-                res.json(assignment);
+                res.json({
+                    success: true,
+                    message: 'Assignment successfully retrieved',
+                    data: assignment,
+
+                });
             } else {
                 res.status(404).json({ message: 'Assignment not found' });
             }
@@ -39,7 +56,7 @@ export class LecturerCourseAssignmentController {
         try {
             const data = req.body;
             await LecturerCourseAssignmentService.createAssignment(data);
-            res.status(201).json({ message: 'Assignment created successfully' });
+            res.status(201).json({success: true, message: 'Assignment created successfully' });
         } catch (err) {
             res.status(500).json({ error: err });
         }
@@ -50,7 +67,7 @@ export class LecturerCourseAssignmentController {
             const { assignment_id } = req.params;
             const data = req.body;
             await LecturerCourseAssignmentService.updateAssignment(assignment_id, data);
-            res.json({ message: 'Assignment updated successfully' });
+            res.json({success: true, message: 'Assignment updated successfully' });
         } catch (err) {
             res.status(500).json({ error: err });
         }
@@ -60,7 +77,7 @@ export class LecturerCourseAssignmentController {
         try {
             const { assignment_id } = req.params;
             await LecturerCourseAssignmentService.deleteAssignment(assignment_id);
-            res.json({ message: 'Assignment deleted successfully' });
+            res.json({success: true, message: 'Assignment deleted successfully' });
         } catch (err) {
             res.status(500).json({ error: err });
         }

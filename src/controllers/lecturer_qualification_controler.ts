@@ -5,9 +5,9 @@ export class LecturerQualificationController {
     static async getAllLecturerQualifications(req: Request, res: Response): Promise<void> {
         try {
             const qualifications = await LecturerQualificationService.getAllLecturerQualifications();
-            res.json(qualifications);
-        } catch (err) {
-            res.status(500).json({ error: err });
+            res.json({ success: true, data: qualifications, message: 'Lecturer qualifications retrieved successfully' });
+        } catch (err: any) {
+            res.status(500).json({ success: false, data: null, message: err.message || 'An error occurred' });
         }
     }
 
@@ -16,12 +16,12 @@ export class LecturerQualificationController {
             const { lecturer_qualification_id } = req.params;
             const qualification = await LecturerQualificationService.getLecturerQualificationById(lecturer_qualification_id);
             if (qualification) {
-                res.json(qualification);
+                res.json({ success: true, data: qualification, message: 'Lecturer qualification retrieved successfully' });
             } else {
-                res.status(404).json({ message: 'Lecturer qualification not found' });
+                res.status(404).json({ success: false, data: null, message: 'Lecturer qualification not found' });
             }
-        } catch (err) {
-            res.status(500).json({ error: err });
+        } catch (err: any) {
+            res.status(500).json({ success: false, data: null, message: err.message || 'An error occurred' });
         }
     }
 
@@ -29,9 +29,9 @@ export class LecturerQualificationController {
         try {
             const data = req.body;
             await LecturerQualificationService.createLecturerQualification(data);
-            res.status(201).json({ message: 'Lecturer qualification created successfully' });
-        } catch (err) {
-            res.status(500).json({ error: err });
+            res.status(201).json({ success: true, data: null, message: 'Lecturer qualification created successfully' });
+        } catch (err: any) {
+            res.status(500).json({ success: false, data: null, message: err.message || 'An error occurred' });
         }
     }
 
@@ -40,9 +40,9 @@ export class LecturerQualificationController {
             const { lecturer_qualification_id } = req.params;
             const data = req.body;
             await LecturerQualificationService.updateLecturerQualification(lecturer_qualification_id, data);
-            res.json({ message: 'Lecturer qualification updated successfully' });
-        } catch (err) {
-            res.status(500).json({ error: err });
+            res.json({ success: true, data: null, message: 'Lecturer qualification updated successfully' });
+        } catch (err: any) {
+            res.status(500).json({ success: false, data: null, message: err.message || 'An error occurred' });
         }
     }
 
@@ -50,9 +50,9 @@ export class LecturerQualificationController {
         try {
             const { lecturer_qualification_id } = req.params;
             await LecturerQualificationService.deleteLecturerQualification(lecturer_qualification_id);
-            res.json({ message: 'Lecturer qualification deleted successfully' });
-        } catch (err) {
-            res.status(500).json({ error: err });
+            res.json({ success: true, data: null, message: 'Lecturer qualification deleted successfully' });
+        } catch (err: any) {
+            res.status(500).json({ success: false, data: null, message: err.message || 'An error occurred' });
         }
     }
 }
