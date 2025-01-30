@@ -66,6 +66,8 @@ export class StudentCourseService {
         const [rows] = await db.query(sql, [student_id, student_id, student_id]);
         return rows as (StudentCourseEnrollment & Course)[];
     }
+
+
     // Get student's course history with grades
     static async getStudentCourseHistory(student_id: string): Promise<(StudentCourseEnrollment & Course)[]> {
         const sql = `

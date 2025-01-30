@@ -8,7 +8,7 @@ export class StudentCourseController {
             const { student_id } = req.params;
             const courses = await StudentCourseService.getStudentCourses(student_id);
             res.json({
-               success: true,
+                success: true,
                 message: 'Student courses found successfully',
                 data: courses
             });
@@ -25,6 +25,21 @@ export class StudentCourseController {
             res.json({
                 success: true,
                 message: 'Enrolled courses found successfully',
+                data: courses
+            });
+        } catch (err) {
+            res.status(500).json({ error: err });
+        }
+    }
+
+    // Get current students on courses
+    static async getEnrolledStudentsByCourse(req: Request, res: Response): Promise<void> {
+        try {
+            const { student_id: course_id } = req.params;
+            const courses = await StudentCourseService.getEnrolledStudentsByCourse(course_id);
+            res.json({
+                success: true,
+                message: 'Enrolled students found successfully',
                 data: courses
             });
         } catch (err) {
@@ -71,7 +86,7 @@ export class StudentCourseController {
         try {
             const enrollment = req.body;
             await StudentCourseService.enrollStudentInCourse(enrollment);
-            res.status(201).json({success: true, message: 'Enrollment successful' });
+            res.status(201).json({ success: true, message: 'Enrollment successful' });
         } catch (err) {
             res.status(500).json({ error: err });
         }
@@ -114,7 +129,7 @@ export class StudentCourseController {
             const { enrollment_id } = req.params;
             const updates = req.body;
             await StudentCourseService.updateStudentCourseEnrollment(enrollment_id, updates);
-            res.json({success: true, message: 'Enrollment updated successfully' });
+            res.json({ success: true, message: 'Enrollment updated successfully' });
         } catch (err) {
             res.status(500).json({ error: err });
         }
