@@ -82,4 +82,38 @@ export class LecturerCourseAssignmentController {
             res.status(500).json({ error: err });
         }
     }
+
+    static async getAssignmentsBySemesterAndYear(req: Request, res: Response): Promise<void> {
+        try {
+            const { semester, academic_year } = req.params;
+            const assignments = await LecturerCourseAssignmentService.getAssignmentsBySemesterAndYear(semester, academic_year);
+            res.json({
+                success: true,
+                message: 'Assignments retrieved successfully',
+                data: assignments,
+            });
+        } catch (err) {
+            res.status(500).json({ error: err });
+        }
+    }
+
+    static async bulkCreateAssignments(req: Request, res: Response): Promise<void> {
+        try {
+            const assignments = req.body;
+            await LecturerCourseAssignmentService.bulkCreateAssignments(assignments);
+            res.status(201).json({ success: true, message: 'Assignments created successfully' });
+        } catch (err) {
+            res.status(500).json({ error: err });
+        }
+    }
+
+    static async bulkUpdateAssignments(req: Request, res: Response): Promise<void> {
+        try {
+            const assignments = req.body;
+            await LecturerCourseAssignmentService.bulkUpdateAssignments(assignments);
+            res.json({ success: true, message: 'Assignments updated successfully' });
+        } catch (err) {
+            res.status(500).json({ error: err });
+        }
+    }
 }

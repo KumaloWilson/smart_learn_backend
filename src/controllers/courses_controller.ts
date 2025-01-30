@@ -98,4 +98,102 @@ export class CourseController {
             res.status(500).json({ error: err });
         }
     }
+
+    static async getCoursesByStatus(req: Request, res: Response): Promise<void> {
+        try {
+            const { status } = req.params;
+            const courses = await CourseService.getCoursesByStatus(status);
+            res.json({
+                success: true,
+                message: 'Courses retrieved successfully',
+                data: courses,
+            });
+        } catch (err) {
+            res.status(500).json({ error: err });
+        }
+    }
+
+    static async getCoursesByElectiveStatus(req: Request, res: Response): Promise<void> {
+        try {
+            const { is_elective } = req.params;
+            const courses = await CourseService.getCoursesByElectiveStatus(is_elective === 'true');
+            res.json({
+                success: true,
+                message: 'Courses retrieved successfully',
+                data: courses,
+            });
+        } catch (err) {
+            res.status(500).json({ error: err });
+        }
+    }
+
+    static async getCoursesByPhase(req: Request, res: Response): Promise<void> {
+        try {
+            const { phase } = req.params;
+            const courses = await CourseService.getCoursesByPhase(parseInt(phase));
+            res.json({
+                success: true,
+                message: 'Courses retrieved successfully',
+                data: courses,
+            });
+        } catch (err) {
+            res.status(500).json({ error: err });
+        }
+    }
+
+    static async getCoursesBySemesterOffered(req: Request, res: Response): Promise<void> {
+        try {
+            const { semester_offered } = req.params;
+            const courses = await CourseService.getCoursesBySemesterOffered(semester_offered);
+            res.json({
+                success: true,
+                message: 'Courses retrieved successfully',
+                data: courses,
+            });
+        } catch (err) {
+            res.status(500).json({ error: err });
+        }
+    }
+
+    static async getCoursesByLevel(req: Request, res: Response): Promise<void> {
+        try {
+            const { level } = req.params;
+            const courses = await CourseService.getCoursesByLevel(level);
+            res.json({
+                success: true,
+                message: 'Courses retrieved successfully',
+                data: courses,
+            });
+        } catch (err) {
+            res.status(500).json({ error: err });
+        }
+    }
+
+    static async getCoursesByPrerequisites(req: Request, res: Response): Promise<void> {
+        try {
+            const { prerequisites } = req.params;
+            const courses = await CourseService.getCoursesByPrerequisites(prerequisites);
+            res.json({
+                success: true,
+                message: 'Courses retrieved successfully',
+                data: courses,
+            });
+        } catch (err) {
+            res.status(500).json({ error: err });
+        }
+    }
+
+    static async getCoursesByCreditHours(req: Request, res: Response): Promise<void> {
+        try {
+            const { credit_hours } = req.params;
+            const courses = await CourseService.getCoursesByCreditHours(parseInt(credit_hours));
+            res.json({
+                success: true,
+                message: 'Courses retrieved successfully',
+                data: courses,
+            });
+        } catch (err) {
+            res.status(500).json({ error: err });
+        }
+    }
 }
