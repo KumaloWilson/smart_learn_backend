@@ -1,6 +1,7 @@
 import db from '../config/sql_config';
 import { StudentCourseEnrollment } from '../models/course_enrollment';
 import { Course } from '../models/course';
+import { AttendanceRecord, CourseEnrollmentBasic, CourseEnrollmentDetails, ProgressRecord } from '../models/student_course_enrollment';
 
 export class StudentCourseService {
     // Get all courses for a specific student
@@ -66,8 +67,6 @@ export class StudentCourseService {
         const [rows] = await db.query(sql, [student_id, student_id, student_id]);
         return rows as (StudentCourseEnrollment & Course)[];
     }
-
-
     // Get student's course history with grades
     static async getStudentCourseHistory(student_id: string): Promise<(StudentCourseEnrollment & Course)[]> {
         const sql = `
@@ -190,5 +189,179 @@ export class StudentCourseService {
             [student_id, course_id]
         );
         return rows[0] || null;
+    }
+
+
+    static async getCourseEnrollmentDetails(course_id: string): Promise<CourseEnrollmentDetails[]> {
+        try {
+            // First, get the basic enrollment and student data
+            const basicSql = `
+                SELECT 
+                    sce.enrollment_id,
+                    sce.student_id,
+                    sce.course_id,
+                    sce.academic_year,
+                    sce.semester,
+                    sce.enrollment_date,
+                    sce.grade,
+                    sce.grade_points,
+                    sce.attendance_percentage,
+                    sce.status,
+                    sce.is_retake,
+                    sce.created_at,
+                    sce.updated_at,
+                    s.registration_number,
+                    s.first_name,
+                    s.middle_name,
+                    s.last_name,
+                    s.email,
+                    s.enrollment_status
+                FROM student_course_enrollments sce
+                JOIN students s ON sce.student_id = s.student_id
+                WHERE sce.course_id = ?
+            `;
+
+            const [basicRows] = await db.query(basicSql, [course_id]);
+            const enrollments = basicRows as CourseEnrollmentBasic[];
+
+            // Then, for each enrollment, get the attendance and progress records
+            const result: CourseEnrollmentDetails[] = await Promise.all(
+                enrollments.map(async (enrollment) => {
+                    // Get attendance records
+                    const attendanceSql = `
+                        SELECT 
+                            attendance_id,
+                            class_date,
+                            status,
+                            remarks
+                        FROM student_attendance
+                        WHERE student_id = ? AND course_id = ?
+                    `;
+                    const [attendanceRows] = await db.query(attendanceSql, [
+                        enrollment.student_id,
+                        course_id
+                    ]);
+
+                    // Get progress records
+                    const progressSql = `
+                        SELECT 
+                            progress_id,
+                            subtopic_id,
+                            mastery_level,
+                            attempts_count,
+                            last_attempt_date
+                        FROM student_progress
+                        WHERE student_id = ?
+                    `;
+                    const [progressRows] = await db.query(progressSql, [enrollment.student_id]);
+
+                    return {
+                        ...enrollment,
+                        attendance_records: attendanceRows as AttendanceRecord[],
+                        progress_records: progressRows as ProgressRecord[]
+                    };
+                })
+            );
+
+            return result;
+        } catch (error) {
+            console.error('Error in getCourseEnrollmentDetails:', error);
+            throw error;
+        }
+    }
+
+    static async getCourseEnrollmentDetailsWithFilters(
+        course_id: string,
+        filters: {
+            enrollment_status?: 'active' | 'suspended' | 'graduated' | 'withdrawn' | 'deferred';
+            academic_year?: string;
+            semester?: '1' | '2';
+        }
+    ): Promise<CourseEnrollmentDetails[]> {
+        try {
+            let basicSql = `
+                SELECT 
+                    sce.enrollment_id,
+                    sce.student_id,
+                    sce.course_id,
+                    sce.academic_year,
+                    sce.semester,
+                    sce.enrollment_date,
+                    sce.grade,
+                    sce.grade_points,
+                    sce.attendance_percentage,
+                    sce.status,
+                    sce.is_retake,
+                    sce.created_at,
+                    sce.updated_at,
+                    s.registration_number,
+                    s.first_name,
+                    s.middle_name,
+                    s.last_name,
+                    s.email,
+                    s.enrollment_status
+                FROM student_course_enrollments sce
+                JOIN students s ON sce.student_id = s.student_id
+                WHERE sce.course_id = ?
+            `;
+
+            const params: any[] = [course_id];
+
+            if (filters.enrollment_status) {
+                basicSql += ' AND s.enrollment_status = ?';
+                params.push(filters.enrollment_status);
+            }
+
+            if (filters.academic_year) {
+                basicSql += ' AND sce.academic_year = ?';
+                params.push(filters.academic_year);
+            }
+
+            if (filters.semester) {
+                basicSql += ' AND sce.semester = ?';
+                params.push(filters.semester);
+            }
+
+            const [basicRows] = await db.query(basicSql, params);
+            const enrollments = basicRows as CourseEnrollmentBasic[];
+
+            const result: CourseEnrollmentDetails[] = await Promise.all(
+                enrollments.map(async (enrollment) => {
+                    const [attendanceRows] = await db.query(
+                        `SELECT 
+                            attendance_id,
+                            class_date,
+                            status,
+                            remarks
+                        FROM student_attendance
+                        WHERE student_id = ? AND course_id = ?`,
+                        [enrollment.student_id, course_id]
+                    );
+
+                    const [progressRows] = await db.query(
+                        `SELECT 
+                            progress_id,
+                            subtopic_id,
+                            mastery_level,
+                            attempts_count,
+                            last_attempt_date
+                        FROM student_progress
+                        WHERE student_id = ?`,
+                        [enrollment.student_id]
+                    );
+
+                    return {
+                        ...enrollment,
+                        attendance_records: attendanceRows as AttendanceRecord[],
+                        progress_records: progressRows as ProgressRecord[]
+                    };
+                })
+            );
+
+            return result;
+        } catch (error) {
+            console.error('Error in getCourseEnrollmentDetailsWithFilters:', error);
+            throw error;
+        }
     }
 }

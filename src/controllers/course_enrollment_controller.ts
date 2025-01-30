@@ -35,8 +35,8 @@ export class StudentCourseController {
     // Get current students on courses
     static async getEnrolledStudentsByCourse(req: Request, res: Response): Promise<void> {
         try {
-            const { student_id: course_id } = req.params;
-            const courses = await StudentCourseService.getEnrolledStudentsByCourse(course_id);
+            const { course_id } = req.params;
+            const courses = await StudentCourseService.getCourseEnrollmentDetails(course_id);
             res.json({
                 success: true,
                 message: 'Enrolled students found successfully',
