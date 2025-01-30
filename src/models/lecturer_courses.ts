@@ -3,7 +3,7 @@ export interface LecturerCourseAssignment {
     lecturer_id: string;
     course_id: string;
     academic_year: string;
-    semester: 'fall' | 'spring' | 'summer';
+    semester: '1' | '2';
     role: 'primary' | 'assistant' | 'guest';
     created_at?: Date;
 }
@@ -14,7 +14,7 @@ export interface LecturerCourseAssignmentDetails {
     lecturer_id: string;
     course_id: string;
     academic_year: string;
-    semester: 'fall' | 'spring' | 'summer';
+    semester: '1' | '2';
     role: 'primary' | 'assistant' | 'guest';
     course_name: string;
     course_code: string;

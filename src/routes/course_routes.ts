@@ -11,4 +11,12 @@ router.post('/', CourseController.createCourse);
 router.put('/:course_id', CourseController.updateCourse);
 router.delete('/:course_id', CourseController.deleteCourse);
 
+router.get('/status/:status', CourseController.getCoursesByStatus);
+router.get('/elective/:is_elective', CourseController.getCoursesByElectiveStatus);
+router.get('/phase/:phase', CourseController.getCoursesByPhase);
+router.get('/semester-offered/:semester_offered', CourseController.getCoursesBySemesterOffered);
+router.get('/level/:level', CourseController.getCoursesByLevel);
+router.get('/prerequisites/:prerequisites', CourseController.getCoursesByPrerequisites);
+router.get('/credit-hours/:credit_hours', CourseController.getCoursesByCreditHours);
+
 export default router;
