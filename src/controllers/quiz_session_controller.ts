@@ -2,6 +2,25 @@ import { Request, Response } from 'express';
 import { QuizSessionService } from '../services/quiz_session_service';
 
 export class QuizSessionController {
+
+    static async createQuizSession(req: Request, res: Response) {
+        try {
+            const quiz = req.body;
+            await QuizSessionService.createQuiz(quiz);
+            res.json({
+                success: true,
+                message: 'Quiz created successfully.'
+            });
+        } catch (error: any) {
+            res.status(400).json({
+                success: false,
+                data: null,
+                message: error.message
+            });
+        }
+    }
+
+
     static async startQuiz(req: Request, res: Response) {
         try {
             const { student_id, quiz } = req.body;

@@ -1,4 +1,3 @@
-// Define the return types
 export interface CourseEnrollmentBasic {
     enrollment_id: string;
     student_id: string;
@@ -13,8 +12,6 @@ export interface CourseEnrollmentBasic {
     is_retake: boolean;
     created_at?: string;
     updated_at?: string;
-
-    // Student fields
     registration_number: string;
     first_name: string;
     middle_name?: string;
@@ -38,7 +35,7 @@ export interface ProgressRecord {
     last_attempt_date?: Date;
 }
 
-export interface CourseEnrollmentDetails extends CourseEnrollmentBasic {
+export interface StudentCourseEnrollmentDetails extends CourseEnrollmentBasic {
     attendance_records: AttendanceRecord[];
     progress_records: ProgressRecord[];
 }

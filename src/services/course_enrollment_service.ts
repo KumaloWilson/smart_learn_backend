@@ -1,7 +1,7 @@
 import db from '../config/sql_config';
 import { StudentCourseEnrollment } from '../models/course_enrollment';
 import { Course } from '../models/course';
-import { AttendanceRecord, CourseEnrollmentBasic, CourseEnrollmentDetails, ProgressRecord } from '../models/student_course_enrollment';
+import { AttendanceRecord, CourseEnrollmentBasic, StudentCourseEnrollmentDetails, ProgressRecord } from '../models/student_course_enrollment';
 
 export class StudentCourseService {
     // Get all courses for a specific student
@@ -192,7 +192,7 @@ export class StudentCourseService {
     }
 
 
-    static async getCourseEnrollmentDetails(course_id: string): Promise<CourseEnrollmentDetails[]> {
+    static async getCourseEnrollmentDetails(course_id: string): Promise<StudentCourseEnrollmentDetails[]> {
         try {
             // First, get the basic enrollment and student data
             const basicSql = `
@@ -225,7 +225,7 @@ export class StudentCourseService {
             const enrollments = basicRows as CourseEnrollmentBasic[];
 
             // Then, for each enrollment, get the attendance and progress records
-            const result: CourseEnrollmentDetails[] = await Promise.all(
+            const result: StudentCourseEnrollmentDetails[] = await Promise.all(
                 enrollments.map(async (enrollment) => {
                     // Get attendance records
                     const attendanceSql = `
@@ -277,7 +277,7 @@ export class StudentCourseService {
             academic_year?: string;
             semester?: '1' | '2';
         }
-    ): Promise<CourseEnrollmentDetails[]> {
+    ): Promise<StudentCourseEnrollmentDetails[]> {
         try {
             let basicSql = `
                 SELECT 
@@ -325,7 +325,7 @@ export class StudentCourseService {
             const [basicRows] = await db.query(basicSql, params);
             const enrollments = basicRows as CourseEnrollmentBasic[];
 
-            const result: CourseEnrollmentDetails[] = await Promise.all(
+            const result: StudentCourseEnrollmentDetails[] = await Promise.all(
                 enrollments.map(async (enrollment) => {
                     const [attendanceRows] = await db.query(
                         `SELECT 

@@ -10,6 +10,8 @@ import { Question } from '../models/quiz_question';
 
 export class QuizSessionService {
 
+
+
     static async startQuizAttempt(student_id: string, quiz: Quiz): Promise<{ quizSession: QuizSession, questions: Question[] }> {
 
         const attempt_id = uuidv4();
