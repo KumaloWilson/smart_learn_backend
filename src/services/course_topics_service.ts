@@ -14,9 +14,11 @@ export class CourseTopicService {
         return rows[0] || null;
     }
 
+
+
     // Get topics by course ID
     static async getTopicsByCourseId(course_id: string): Promise<CourseTopic[]> {
-        const [rows] = await db.query('SELECT * FROM course_topics WHERE course_id = ?', [course_id]);
+        const [rows] = await db.query('SELECT * FROM course_topics WHERE course_id = ? ORDER BY topic_number', [course_id]);
         return rows as CourseTopic[];
     }
 
