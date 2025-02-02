@@ -11,6 +11,8 @@ router.post('/start', QuizSessionController.startQuiz);
 router.post('/submit', QuizSessionController.submitQuiz);
 router.get('/current/:attempt_id', QuizSessionController.getQuizSession)
 router.get('/available', QuizSessionController.getAllQuizzes)
+router.get('/available/:instructor_id', QuizSessionController.getQuizzesByInstructorId)
+router.get('/available/:course_id', QuizSessionController.getQuizzesByCourseId)
 
 
 export default router;

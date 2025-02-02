@@ -10,8 +10,6 @@ import { Question } from '../models/quiz_question';
 
 export class QuizSessionService {
 
-
-
     static async startQuizAttempt(student_id: string, quiz: Quiz): Promise<{ quizSession: QuizSession, questions: Question[] }> {
 
         const attempt_id = uuidv4();
@@ -518,6 +516,15 @@ export class QuizSessionService {
         return rows as Quiz[];
     }
 
+    static async getQuizzesByCourseId(courseId: string): Promise<Quiz[]> {
+        const [rows] = await db.query('SELECT * FROM quizzes WHERE course_id = ?', [courseId]);
+        return rows as Quiz[];
+    }
+
+    static async getQuizzesByInstructorId(instructorId: string): Promise<Quiz[]> {
+        const [rows] = await db.query('SELECT * FROM quizzes WHERE created_by = ?', [instructorId]);
+        return rows as Quiz[];
+    }
 }
 
 

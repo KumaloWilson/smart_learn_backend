@@ -131,4 +131,40 @@ export class QuizSessionController {
             });
         }
     }
+
+    static async getQuizzesByCourseId(req: Request, res: Response): Promise<void> {
+        const { course_id } = req.params;
+        try {
+            const quizzes = await QuizSessionService.getQuizzesByCourseId(course_id);
+            res.json({
+                success: true,
+                data: quizzes,
+                message: 'All quizzes retrieved successfully.'
+            });
+        } catch (err) {
+            res.status(500).json({
+                success: false,
+                data: null,
+                message: 'Failed to retrieve quizzes.'
+            });
+        }
+    }
+
+    static async getQuizzesByInstructorId(req: Request, res: Response): Promise<void> {
+        const { instructor_id } = req.params;
+        try {
+            const quizzes = await QuizSessionService.getQuizzesByInstructorId(instructor_id);
+            res.json({
+                success: true,
+                data: quizzes,
+                message: 'All quizzes retrieved successfully.'
+            });
+        } catch (err) {
+            res.status(500).json({
+                success: false,
+                data: null,
+                message: 'Failed to retrieve quizzes.'
+            });
+        }
+    }
 }
