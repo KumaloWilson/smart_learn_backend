@@ -1,8 +1,9 @@
 export interface CourseTopic {
-    topic_id: string; // Unique identifier for the topic
-    course_id: string; // ID of the course to which the topic belongs
-    topic_name: string; // Name of the topic
-    description?: string; // Description of the topic (can be null)
-    created_at?: string; // Timestamp of when the topic was created
-    updated_at?: string; // Timestamp of when the topic was last updated
+    topic_id: string;
+    course_id: string;
+    topic_name: string;
+    topic_number: number;
+    description?: string;
+    created_at?: string;
+    updated_at?: string;
 }
