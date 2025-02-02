@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { CourseTopicService } from '../services/course_topic_service'; // Assuming you have a CourseTopicService
+import { CourseTopicService } from '../services/course_topics_service';
 
 export class CourseTopicController {
     static async getAllTopics(req: Request, res: Response): Promise<void> {

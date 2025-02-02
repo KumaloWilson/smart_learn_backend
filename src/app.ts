@@ -15,6 +15,7 @@ import lecturerRoutes from './routes/lecturer_routes';
 import lecturerQualificationRoutes from './routes/lecturer_qualification_routes';
 import lecturerDepartmentAffiliationRoutes from './routes/department_affiliation_routes';
 import lecturerCourseAssignmentRoutes from './routes/lecturer_courses_routes';
+import courseTopicsRoutes from './routes/course_topics_routes';
 import schoolRoutes from './routes/school_routes';
 import departmentRoutes from './routes/department_routes';
 import programRoutes from './routes/program_routes';
@@ -65,6 +66,7 @@ app.use('/api/v1/lecturer', lecturerRoutes);
 app.use('/api/v1/lecturer/qualifications', lecturerQualificationRoutes);
 app.use('/api/v1/lecturer/department/affiliations', lecturerDepartmentAffiliationRoutes);
 app.use('/api/v1/lecturer/course/assignments', lecturerCourseAssignmentRoutes);
+app.use('/api/v1/lecturer/course/topics', courseTopicsRoutes);
 
 // School, Department, Program, Course Routes
 app.use('/api/v1/schools', schoolRoutes);
