@@ -5,6 +5,7 @@ export interface Quiz {
     subtopic?: string;
     difficulty: 'easy' | 'medium' | 'hard';
     created_by: string;
+    creator_role: 'lecturer' | 'student';
     total_questions: number;
     time_limit?: number;
     passing_score?: number;
@@ -13,4 +14,6 @@ export interface Quiz {
     tags?: string[];
     created_at: Date;
     updated_at: Date;
+    expires_at?: Date | null;
+    visibility?: 'private' | 'public';
 }
