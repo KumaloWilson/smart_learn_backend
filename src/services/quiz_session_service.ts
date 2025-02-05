@@ -24,9 +24,6 @@ export class QuizSessionService {
                 learningObjectives: quiz.learning_objectives,
             }
         );
-
-
-        await this.createQuiz(quiz);
         // Validate quiz availability and attempt limits
         const [quizInfo]: any = await db.query(`
             SELECT q.*, COUNT(qa.attempt_id) as attempt_count
