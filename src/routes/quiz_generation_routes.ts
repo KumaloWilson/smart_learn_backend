@@ -7,8 +7,6 @@ const router = express.Router();
 
 router.post(
     '/',
-    // authenticateUser,
-    // authorizeRole(['lecturer', 'admin']),
     QuestionGenerationController.generateQuestions
 );
 

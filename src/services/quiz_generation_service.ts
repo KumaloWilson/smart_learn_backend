@@ -21,10 +21,7 @@ export class QuestionGenerationService {
               "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
               "correctAnswer": "A",
               "explanation": "brief explanation",
-              "misconception": "common error",
-              "hint": "helping hint",
-              "timeEstimate": 30,
-              "tags": ["tag1", "tag2"]
+              "misconception": "common error"
             }
           ]
         }`;
