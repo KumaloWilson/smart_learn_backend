@@ -26,14 +26,11 @@ export class QuestionBankService {
                         options,
                         correct_answer,
                         explanation,
-                        hint,
                         difficulty,
                         misconception,
                         points,
-                        time_estimate,
-                        tags,
                         type
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 `;
 
                 const values = [
@@ -43,12 +40,9 @@ export class QuestionBankService {
                     JSON.stringify(question.options),
                     question.correct_answer,
                     question.explanation || null,
-                    question.hint || null,
                     question.difficulty,
                     question.misconception || null,
                     question.points,
-                    question.time_estimate,
-                    question.tags ? JSON.stringify(question.tags) : null,
                     question.type
                 ];
 
