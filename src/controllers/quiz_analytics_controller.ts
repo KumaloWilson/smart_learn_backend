@@ -31,6 +31,7 @@ export class AnalyticsController {
                 message: 'Instructor analytics retrieved successfully.'
             });
         } catch (error: any) {
+            console.error(error);
             res.status(400).json({
                 success: false,
                 data: null,

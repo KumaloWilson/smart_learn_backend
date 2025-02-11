@@ -36,7 +36,9 @@ export class InstructorAnalyticsService {
                     COUNT(DISTINCT qa.student_id) as students_attempted,
                     AVG(qa.score) as avg_quiz_score,
                     COUNT(DISTINCT CASE WHEN qa.score >= 70 THEN qa.student_id END) as students_mastered,
-                    JSON_OBJECTAGG(q.difficulty, COUNT(*)) as difficulty_distribution
+                    SUM(CASE WHEN q.difficulty = 'easy' THEN 1 ELSE 0 END) as easy_count,
+                    SUM(CASE WHEN q.difficulty = 'medium' THEN 1 ELSE 0 END) as medium_count,
+                    SUM(CASE WHEN q.difficulty = 'hard' THEN 1 ELSE 0 END) as hard_count
                 FROM course_topics ct
                 LEFT JOIN quizzes q ON ct.topic_id = q.topic
                 LEFT JOIN quiz_attempts qa ON q.quiz_id = qa.quiz_id
@@ -50,7 +52,11 @@ export class InstructorAnalyticsService {
                 avg_quiz_score as avg_mastery_level,
                 (students_mastered / NULLIF(students_attempted, 0)) * 100 as mastery_rate,
                 students_attempted,
-                difficulty_distribution
+                JSON_OBJECT(
+                    'easy', IFNULL(easy_count, 0),
+                    'medium', IFNULL(medium_count, 0),
+                    'hard', IFNULL(hard_count, 0)
+                ) as difficulty_distribution
             FROM TopicStats
             ORDER BY topic_number
         `, [course_id]);
