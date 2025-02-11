@@ -11,6 +11,7 @@ router.get('/student/:student_id', AnalyticsController.getStudentAnalytics);
 // router.get('/student/:student_id/learning-path', AnalyticsController.getLearningPath);
 // router.get('/student/:student_id/recommendations', AnalyticsController.getRecommendations);
 
+
 // Instructor analytics routes
 router.get('/course/:course_id', AnalyticsController.getInstructorAnalytics);
 // router.get('/course/:course_id/performance',  AnalyticsController.getCoursePerformance);
