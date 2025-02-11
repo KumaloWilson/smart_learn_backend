@@ -109,50 +109,69 @@ export class QuizSessionService {
             // Process each response
             for (const response of responses) {
                 try {
-                    // Fetch question info with error handling
-                    const [questionInfo]: any = await db.query(`
-                    SELECT q.*, qz.subtopic
-                    FROM questions q
-                    JOIN quiz_attempts qa ON qa.attempt_id = q.attempt_id
-                    JOIN quizzes qz ON qa.quiz_id = qz.quiz_id
-                    WHERE q.question_id = ?
-                `, [response.question_id]).catch((error) => {
-                        throw new DatabaseError(`Failed to fetch question info: ${error.message}`);
+                    // Fetch question info
+                    const [rows]: any = await db.query(`
+                        SELECT 
+                            q.*,
+                            qz.subtopic,
+                            q.points as question_points,
+                            q.correct_answer as question_correct_answer
+                        FROM questions q
+                        JOIN quiz_attempts qa ON qa.attempt_id = q.attempt_id
+                        JOIN quizzes qz ON qa.quiz_id = qz.quiz_id
+                        WHERE q.question_id = ?
+                    `, [response.question_id]);
+
+                    console.log('Query result for question:', {
+                        questionId: response.question_id,
+                        rows
                     });
 
-                    if (!questionInfo || questionInfo.length === 0) {
+                    if (!Array.isArray(rows) || rows.length === 0) {
                         throw new ValidationError(`Question not found: ${response.question_id}`);
                     }
 
-                    // Before destructuring, log the full questionInfo
-                    console.log('Full questionInfo:', questionInfo);
+                    const questionInfo = rows[0];
 
-                    // Modify how we access the data
-                    const questionData = Array.isArray(questionInfo) ? questionInfo[0] : questionInfo;
-                    console.log('Question data:', questionData);
-
-                    const points = Number(questionData.points);
-                    console.log('Points after conversion:', points);
-
+                    // Validate and convert points
+                    const points = Number(questionInfo.question_points);
                     if (isNaN(points) || points < 0) {
+                        console.error('Invalid points value:', {
+                            questionId: response.question_id,
+                            rawPoints: questionInfo.question_points,
+                            convertedPoints: points
+                        });
                         throw new ValidationError(`Invalid points value for question: ${response.question_id}`);
                     }
 
-
+                    // Add to total points
                     totalPoints += points;
 
-                    const isCorrect = response.student_answer === questionInfo.correct_answer;
-                    let feedback = "Incorrect answer.";
+                    // Compare answers (case-insensitive)
+                    const isCorrect = response.student_answer.toLowerCase() ===
+                        questionInfo.question_correct_answer.toLowerCase();
 
-                    if (isCorrect) {
-                        earnedPoints += points;
-                        feedback = "Correct answer!";
-                    } else if (questionInfo.misconception) {
+                    // Calculate points earned for this question
+                    const pointsEarned = isCorrect ? points : 0;
+                    earnedPoints += pointsEarned;
+
+                    console.log('Answer comparison:', {
+                        questionId: response.question_id,
+                        studentAnswer: response.student_answer,
+                        correctAnswer: questionInfo.question_correct_answer,
+                        isCorrect,
+                        points,
+                        pointsEarned
+                    });
+
+                    // Generate feedback
+                    let feedback = isCorrect ? "Correct answer!" : "Incorrect answer.";
+                    if (!isCorrect && questionInfo.misconception) {
                         misconceptions.push({
                             subtopic: questionInfo.subtopic,
                             type: questionInfo.misconception
                         });
-                        feedback += ` Common misconception: ${questionInfo.misconception}.`;
+                        feedback += ` Common misconception: ${questionInfo.misconception}`;
                     }
 
                     // Create detailed response
@@ -161,41 +180,40 @@ export class QuizSessionService {
                         attempt_id,
                         question_id: response.question_id,
                         student_answer: response.student_answer,
-                        is_correct: response.is_correct,
+                        is_correct: isCorrect,
                         time_taken: response.time_taken,
-                        points_earned: response.points_earned,
+                        points_earned: pointsEarned,
                         feedback,
                     };
 
                     detailedResponses.push(detailedResponse);
 
-                    // Insert response with error handling
+                    // Insert response
                     await db.query(`
-                    INSERT INTO question_responses (
-                        response_id,
-                        attempt_id,
-                        question_id,
-                        student_answer,
-                        is_correct,
-                        time_taken,
-                        points_earned,
-                        feedback
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                `, [
+                        INSERT INTO question_responses (
+                            response_id,
+                            attempt_id,
+                            question_id,
+                            student_answer,
+                            is_correct,
+                            time_taken,
+                            points_earned,
+                            feedback
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    `, [
                         detailedResponse.response_id,
                         attempt_id,
                         response.question_id,
                         response.student_answer,
                         isCorrect,
                         response.time_taken,
-                        detailedResponse.points_earned,
+                        pointsEarned,
                         feedback
-                    ]).catch((error) => {
-                        throw new DatabaseError(`Failed to insert question response: ${error.message}`);
-                    });
+                    ]);
+
                 } catch (error) {
                     // Roll back any inserted responses if possible
-                    await this.rollbackResponses(attempt_id, detailedResponses.map(r => r.response_id!))
+                    await this.rollbackResponses(attempt_id, detailedResponses.map(r => r.response_id))
                         .catch(rollbackError => console.error('Rollback failed:', rollbackError));
                     throw error;
                 }
@@ -205,53 +223,61 @@ export class QuizSessionService {
                 throw new ValidationError('No valid points found for quiz questions');
             }
 
+            // Calculate final score as percentage
             const score = (earnedPoints / totalPoints) * 100;
 
-            // Update attempt with error handling
+            console.log('Final score calculation:', {
+                earnedPoints,
+                totalPoints,
+                score,
+                responseCount: detailedResponses.length
+            });
+
+            // Update attempt status and score
             try {
                 await db.query(`
-                UPDATE quiz_attempts 
-                SET 
-                    status = 'completed',
-                    score = ?,
-                    end_time = CURRENT_TIMESTAMP
-                WHERE attempt_id = ?
-            `, [score, attempt_id]).catch((error) => {
-                    throw new DatabaseError(`Failed to update quiz attempt: ${error.message}`);
-                });
+                    UPDATE quiz_attempts 
+                    SET 
+                        status = 'completed',
+                        score = ?,
+                        end_time = CURRENT_TIMESTAMP
+                    WHERE attempt_id = ?
+                `, [score, attempt_id]);
 
-                // Get quiz info with error handling
-                const [quizInfo]: any = await db.query(`
-                SELECT qz.subtopic, t.topic_id
-                FROM quizzes qz
-                JOIN topics t ON t.course_id = qz.course_id
-                WHERE qz.quiz_id = ?
-            `, [session.quiz_id]).catch((error) => {
-                    throw new DatabaseError(`Failed to fetch quiz info: ${error.message}`);
-                });
+                // Get quiz info for progress tracking
+                const [quizRows]: any = await db.query(`
+                    SELECT qz.subtopic, t.topic_id
+                    FROM quizzes qz
+                    JOIN topics t ON t.course_id = qz.course_id
+                    WHERE qz.quiz_id = ?
+                `, [session.quiz_id]);
 
-                if (quizInfo && quizInfo.length > 0) {
-                    // Update student progress
-                    await this.updateStudentProgress(session.student_id, session.quiz_id, score);
+                if (quizRows && quizRows.length > 0) {
+                    await this.updateStudentProgress(
+                        session.student_id,
+                        session.quiz_id,
+                        score
+                    );
                 }
 
+                const quizResults = {
+                    score,
+                    detailedResponses
+                };
 
-                const quizResults = { score, detailedResponses };
-
-                console.log(`QUIZ RESULTS : ${quizResults}`);
+                console.log('Quiz submission complete:', quizResults);
 
                 return quizResults;
+
             } catch (error) {
                 // Roll back responses on final update failure
-                await this.rollbackResponses(attempt_id, detailedResponses.map(r => r.response_id!))
+                await this.rollbackResponses(attempt_id, detailedResponses.map(r => r.response_id))
                     .catch(rollbackError => console.error('Rollback failed:', rollbackError));
                 throw error;
             }
         } catch (error) {
-            // Log error for monitoring
             console.error('Quiz submission error:', error);
 
-            // Rethrow with appropriate error type
             if (error instanceof ValidationError ||
                 error instanceof QuizAttemptError ||
                 error instanceof DatabaseError) {
