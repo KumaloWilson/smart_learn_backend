@@ -60,7 +60,7 @@ export class InstructorAnalyticsService {
         return db.query(`
             SELECT 
                 q.quiz_id,
-                q.topic,
+                q.subtopic,
                 q.difficulty,
                 AVG(qa.score) as avg_score,
                 COUNT(qa.attempt_id) as attempt_count,
@@ -81,7 +81,7 @@ export class InstructorAnalyticsService {
                     qa.student_id,
                     COUNT(qa.attempt_id) as total_attempts,
                     AVG(qa.score) as avg_score,
-                    COUNT(DISTINCT q.topic) as topics_attempted
+                    COUNT(DISTINCT q.subtopic) as topics_attempted
                 FROM quiz_attempts qa
                 JOIN quizzes q ON qa.quiz_id = q.quiz_id
                 WHERE q.course_id = ?
@@ -115,7 +115,7 @@ export class InstructorAnalyticsService {
     private static async getMisconceptions(course_id: string): Promise<any> {
         return db.query(`
             SELECT 
-                q.topic,
+                q.subtopic,
                 qa.quiz_id,
                 COUNT(DISTINCT CASE WHEN qa.score < 60 THEN qa.student_id END) as struggling_students,
                 AVG(CASE WHEN qa.score < 60 THEN qa.score END) as avg_failing_score
