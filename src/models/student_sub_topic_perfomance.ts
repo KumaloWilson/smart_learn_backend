@@ -1,5 +1,5 @@
 
-export interface SubtopicPerformance {
+export interface StudentTopicPerformance {
     subtopic_id: string;
     subtopic_name: string;
     mastery_level: number;

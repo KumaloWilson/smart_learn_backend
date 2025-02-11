@@ -1,8 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
 import db from '../config/sql_config';
 import { StudentAnalytics } from '../models/student_analytics';
-import { SubtopicPerformance } from '../models/student_sub_topic_perfomance';
-import { TopicPerformance } from '../models/student_topic_perfomance';
+import { StudentTopicPerformance } from '../models/student_sub_topic_perfomance';
+import { StudentCoursePerformance } from '../models/student_topic_perfomance';
 
 export class LearningAnalyticsService {
     // Fetch comprehensive student analytics with error handling
@@ -43,7 +43,7 @@ export class LearningAnalyticsService {
     // Fetch overall progress with improved error handling
     private static async fetchOverallProgress(student_id: string): Promise<any[]> {
         try {
-            const [progressRows] : any = await db.query(`
+            const [progressRows]: any = await db.query(`
                 SELECT AVG(COALESCE(mastery_level, 0)) as overall_progress
                 FROM student_progress
                 WHERE student_id = ?
@@ -57,7 +57,7 @@ export class LearningAnalyticsService {
     }
 
     // More robust topic performance retrieval
-    private static async getTopicPerformances(student_id: string): Promise<TopicPerformance[]> {
+    private static async getTopicPerformances(student_id: string): Promise<StudentCoursePerformance[]> {
         try {
             const [rows]: any = await db.query(`
                 SELECT 
@@ -71,7 +71,7 @@ export class LearningAnalyticsService {
                 GROUP BY ct.topic_id, ct.topic_name
             `, [student_id]);
 
-            const topicPerformances: TopicPerformance[] = [];
+            const topicPerformances: StudentCoursePerformance[] = [];
 
             for (const row of rows) {
                 const subtopicPerformances = await this.getSubtopicPerformances(student_id, row.topic_id);
@@ -95,7 +95,7 @@ export class LearningAnalyticsService {
     }
 
 
-    private static async getSubtopicPerformances(student_id: string, topic_id: string): Promise<SubtopicPerformance[]> {
+    private static async getSubtopicPerformances(student_id: string, topic_id: string): Promise<StudentTopicPerformance[]> {
         try {
             const [rows]: any = await db.query(`
             SELECT 
@@ -112,7 +112,7 @@ export class LearningAnalyticsService {
             GROUP BY ct.topic_id, q.subtopic, sp.mastery_level, sp.attempts_count, mt.misconception_type
         `, [student_id, student_id, topic_id]);
 
-            const subtopicMap = new Map<string, SubtopicPerformance>();
+            const subtopicMap = new Map<string, StudentTopicPerformance>();
 
             rows.forEach((row: any) => {
                 if (!subtopicMap.has(row.subtopic_id)) {
@@ -145,7 +145,7 @@ export class LearningAnalyticsService {
 
 
     // Robust improvement areas generation
-    private static async generateImprovementAreas(subtopic: SubtopicPerformance): Promise<string[]> {
+    private static async generateImprovementAreas(subtopic: StudentTopicPerformance): Promise<string[]> {
         const improvementAreas: string[] = [];
 
         if (subtopic.mastery_level < 70) {
@@ -188,7 +188,7 @@ export class LearningAnalyticsService {
     // Generate learning path with more sophisticated approach
     private static async generateLearningPath(
         student_id: string,
-        topicPerformances: TopicPerformance[]
+        topicPerformances: StudentCoursePerformance[]
     ): Promise<string[]> {
         const learningPath: string[] = [];
 
@@ -203,10 +203,9 @@ export class LearningAnalyticsService {
                 // Add specific subtopic recommendations
                 topic.weak_subtopics.forEach(subtopic => {
                     learningPath.push(
-                        `Practice ${subtopic.subtopic_name} with focus on: ${
-                            subtopic.improvement_areas.length > 0
-                                ? subtopic.improvement_areas.join(', ')
-                                : 'general improvement'
+                        `Practice ${subtopic.subtopic_name} with focus on: ${subtopic.improvement_areas.length > 0
+                            ? subtopic.improvement_areas.join(', ')
+                            : 'general improvement'
                         }`
                     );
                 });
@@ -255,13 +254,13 @@ export class LearningAnalyticsService {
     }
 
     // Helper methods for identifying areas
-    private static identifyWeakAreas(topicPerformances: TopicPerformance[]): string[] {
+    private static identifyWeakAreas(topicPerformances: StudentCoursePerformance[]): string[] {
         return topicPerformances
             .filter(tp => tp.average_score < 70)
             .map(tp => tp.topic_name);
     }
 
-    private static identifyStrongAreas(topicPerformances: TopicPerformance[]): string[] {
+    private static identifyStrongAreas(topicPerformances: StudentCoursePerformance[]): string[] {
         return topicPerformances
             .filter(tp => tp.average_score >= 90)
             .map(tp => tp.topic_name);
