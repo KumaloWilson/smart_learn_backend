@@ -65,7 +65,6 @@ export class QuizSessionService {
         };
     }
 
-
     static async abandonQuizAttempt(attempt_id: string): Promise<void> {
         const session = await this.getQuizAttempt(attempt_id);
         if (session.status !== 'in_progress') {
@@ -310,27 +309,5 @@ export class QuizSessionService {
     static async getQuizzesByInstructorId(instructorId: string): Promise<Quiz[]> {
         const [rows] = await db.query('SELECT * FROM quizzes WHERE created_by = ?', [instructorId]);
         return rows as Quiz[];
-    }
-}
-
-
-class QuizAttemptError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = 'QuizAttemptError';
-    }
-}
-
-class ValidationError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = 'ValidationError';
-    }
-}
-
-class DatabaseError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = 'DatabaseError';
     }
 }
