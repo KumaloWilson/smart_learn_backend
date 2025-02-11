@@ -142,31 +142,61 @@ export class InstructorAnalyticsService {
     ): string[] {
         const interventions: string[] = [];
 
-        // Topic-based interventions
-        topicPerformance.forEach(topic => {
-            if (topic.avg_mastery_level < 70) {
-                interventions.push(`Priority Review Required: ${topic.topic_name} - current mastery level: ${topic.avg_mastery_level.toFixed(1)}%`);
+        // Helper function to safely format numbers
+        const safeToFixed = (num: number | null | undefined, digits: number = 1): string => {
+            if (num === null || num === undefined || isNaN(num)) {
+                return 'N/A';
             }
-            if (topic.mastery_rate < 50) {
-                interventions.push(`Additional Support Needed: Only ${topic.mastery_rate.toFixed(1)}% of students have mastered ${topic.topic_name}`);
+            return num.toFixed(digits);
+        };
+
+        // Topic-based interventions
+        topicPerformance?.forEach(topic => {
+            if (topic && topic.topic_name) {
+                if (topic.avg_mastery_level !== null && topic.avg_mastery_level < 70) {
+                    interventions.push(
+                        `Priority Review Required: ${topic.topic_name} - current mastery level: ${safeToFixed(topic.avg_mastery_level)}%`
+                    );
+                }
+                if (topic.mastery_rate !== null && topic.mastery_rate < 50) {
+                    interventions.push(
+                        `Additional Support Needed: Only ${safeToFixed(topic.mastery_rate)}% of students have mastered ${topic.topic_name}`
+                    );
+                }
             }
         });
 
         // Engagement-based interventions
-        if (courseEngagement.at_risk_students / courseEngagement.total_students > 0.2) {
-            interventions.push(`High Risk Alert: ${courseEngagement.at_risk_students} students are performing below 60% average`);
-        }
-        if (courseEngagement.completion_rate < 70) {
-            interventions.push(`Low Course Completion: Only ${courseEngagement.completion_rate.toFixed(1)}% of course content attempted`);
+        if (courseEngagement) {
+            const atRiskRatio = courseEngagement.at_risk_students && courseEngagement.total_students ?
+                courseEngagement.at_risk_students / courseEngagement.total_students : 0;
+
+            if (atRiskRatio > 0.2) {
+                interventions.push(
+                    `High Risk Alert: ${courseEngagement.at_risk_students} students are performing below 60% average`
+                );
+            }
+
+            if (courseEngagement.completion_rate !== null && courseEngagement.completion_rate < 70) {
+                interventions.push(
+                    `Low Course Completion: Only ${safeToFixed(courseEngagement.completion_rate)}% of course content attempted`
+                );
+            }
         }
 
         // Quiz-based interventions
-        quizAnalytics.forEach(quiz => {
-            if (quiz.completion_rate < 80) {
-                interventions.push(`Low Quiz Completion: ${quiz.topic} - ${quiz.completion_rate.toFixed(1)}% completion rate`);
-            }
-            if (quiz.avg_score < 65) {
-                interventions.push(`Review Quiz Content: ${quiz.topic} (${quiz.difficulty}) - average score ${quiz.avg_score.toFixed(1)}%`);
+        quizAnalytics?.forEach(quiz => {
+            if (quiz && quiz.topic) {
+                if (quiz.completion_rate !== null && quiz.completion_rate < 80) {
+                    interventions.push(
+                        `Low Quiz Completion: ${quiz.topic} - ${safeToFixed(quiz.completion_rate)}% completion rate`
+                    );
+                }
+                if (quiz.avg_score !== null && quiz.avg_score < 65) {
+                    interventions.push(
+                        `Review Quiz Content: ${quiz.topic} (${quiz.difficulty || 'N/A'}) - average score ${safeToFixed(quiz.avg_score)}%`
+                    );
+                }
             }
         });
 
