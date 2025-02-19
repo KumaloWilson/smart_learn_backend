@@ -14,6 +14,6 @@ export interface Quiz {
     tags?: string[];
     created_at: Date;
     updated_at: Date;
-    expires_at?: Date | null;
+    expires_at: Date;
     visibility?: 'private' | 'public';
 }

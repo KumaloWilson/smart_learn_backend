@@ -435,7 +435,7 @@ export class QuizSessionService {
         return (currentMastery * weightPrevious + newScore * weightNew);
     }
 
-    static async createQuiz(quiz: Quiz): Promise<Quiz> {
+    static async createQuiz(quiz: Quiz): Promise<any> {
         // Convert arrays to JSON strings before inserting
         const quizData = {
             ...quiz,
@@ -444,22 +444,23 @@ export class QuizSessionService {
         };
 
         const sql = `
-            INSERT INTO quizzes (
-                quiz_id,
-                course_id,
-                topic,
-                subtopic,
-                difficulty,
-                created_by,
-                total_questions,
-                time_limit,
-                passing_score,
-                status,
-                learning_objectives,
-                tags,
-                creator_role
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `;
+        INSERT INTO quizzes (
+            quiz_id,
+            course_id,
+            topic,
+            subtopic,
+            difficulty,
+            created_by,
+            total_questions,
+            time_limit,
+            passing_score,
+            status,
+            learning_objectives,
+            tags,
+            creator_role,
+            expires_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
 
         const values = [
             quizData.quiz_id,
@@ -474,7 +475,8 @@ export class QuizSessionService {
             quizData.status,
             quizData.learning_objectives,
             quizData.tags,
-            quizData.creator_role
+            quizData.creator_role,
+            quizData.expires_at
         ];
 
         await db.query(sql, values);
