@@ -435,7 +435,7 @@ export class QuizSessionService {
         return (currentMastery * weightPrevious + newScore * weightNew);
     }
 
-    static async createQuiz(quiz: Quiz): Promise<void> {
+    static async createQuiz(quiz: Quiz): Promise<Quiz> {
         // Convert arrays to JSON strings before inserting
         const quizData = {
             ...quiz,
@@ -477,6 +477,7 @@ export class QuizSessionService {
 
         await db.query(sql, values);
 
+        return quiz;
     }
 
     static async getQuizSessionDetails(attempt_id: string) {

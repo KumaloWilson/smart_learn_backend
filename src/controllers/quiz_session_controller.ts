@@ -6,10 +6,11 @@ export class QuizSessionController {
     static async createQuizSession(req: Request, res: Response) {
         try {
             const quiz = req.body;
-            await QuizSessionService.createQuiz(quiz);
+            const createdQuiz = await QuizSessionService.createQuiz(quiz); // Make sure you import/use the correct service
             res.json({
                 success: true,
-                message: 'Quiz created successfully.'
+                message: 'Quiz created successfully.',
+                data: createdQuiz // now returns the created quiz object
             });
         } catch (error: any) {
             res.status(400).json({
@@ -19,6 +20,7 @@ export class QuizSessionController {
             });
         }
     }
+
 
 
     static async startQuiz(req: Request, res: Response) {
