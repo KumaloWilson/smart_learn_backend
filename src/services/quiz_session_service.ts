@@ -456,8 +456,9 @@ export class QuizSessionService {
                 passing_score,
                 status,
                 learning_objectives,
-                tags
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                tags,
+                creator_role
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
         const values = [
@@ -472,7 +473,8 @@ export class QuizSessionService {
             quizData.passing_score || null,
             quizData.status,
             quizData.learning_objectives,
-            quizData.tags
+            quizData.tags,
+            quizData.creator_role
         ];
 
         await db.query(sql, values);
@@ -535,14 +537,18 @@ export class QuizSessionService {
     }
 
     static async getAllQuizzes(): Promise<Quiz[]> {
-        const [rows] = await db.query('SELECT * FROM quizzes');
+        const [rows] = await db.query('SELECT * FROM quizzes WHERE creator_role = ?', ['lecturer']);
         return rows as Quiz[];
     }
 
     static async getQuizzesByCourseId(courseId: string): Promise<Quiz[]> {
-        const [rows] = await db.query('SELECT * FROM quizzes WHERE course_id = ?', [courseId]);
+        const [rows] = await db.query(
+            'SELECT * FROM quizzes WHERE course_id = ? AND creator_role = ?',
+            [courseId, 'lecturer']
+        );
         return rows as Quiz[];
     }
+
 
     static async getQuizzesByInstructorId(instructorId: string): Promise<Quiz[]> {
         const [rows] = await db.query('SELECT * FROM quizzes WHERE created_by = ?', [instructorId]);
