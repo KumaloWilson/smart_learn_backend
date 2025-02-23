@@ -2,6 +2,7 @@ import db from '../config/sql_config';
 import { CourseEngagement } from '../models/course_engagement';
 import { LecturerTopicPerformance } from '../models/lecturer_perfomance';
 import { QuizAnalytics } from '../models/quiz_analytics';
+import {StudentPerformance} from "../models/student_perfomance";
 
 export class InstructorAnalyticsService {
     static async getCourseAnalytics(course_id: string): Promise<any> {
@@ -201,5 +202,142 @@ export class InstructorAnalyticsService {
         });
 
         return interventions;
+    }
+
+
+    /////////////////////////////////////////////////////////////////////////////////
+
+    static async getQuizAttemptsByQuizId(quiz_id: string): Promise<StudentPerformance[]> {
+        const query = `
+            SELECT 
+                qa.*,
+                s.first_name,
+                s.last_name,
+                s.registration_number,
+                s.email,
+                s.enrollment_status,
+                q.topic,
+                q.total_questions,
+                q.time_limit,
+                COUNT(DISTINCT qa2.attempt_id) as attempt_number,
+                (
+                    SELECT COUNT(*)
+                    FROM question_responses qr
+                    WHERE qr.attempt_id = qa.attempt_id
+                    AND qr.is_correct = true
+                ) as questions_correct,
+                TIMESTAMPDIFF(SECOND, qa.start_time, COALESCE(qa.end_time, CURRENT_TIMESTAMP)) as time_spent
+            FROM quiz_attempts qa
+            JOIN students s ON qa.student_id = s.student_id
+            JOIN quizzes q ON qa.quiz_id = q.quiz_id
+            LEFT JOIN quiz_attempts qa2 ON 
+                qa2.quiz_id = qa.quiz_id AND 
+                qa2.student_id = qa.student_id AND 
+                qa2.attempt_id <= qa.attempt_id
+            WHERE qa.quiz_id = ?
+            GROUP BY qa.attempt_id
+            ORDER BY qa.start_time DESC
+        `;
+
+        const [attempts]: any = await db.query(query, [quiz_id]);
+
+        return attempts.map((attempt: any) => ({
+            ...attempt,
+            student_name: `${attempt.first_name} ${attempt.last_name}`,
+            time_spent: attempt.time_spent || null,
+            questions_correct: attempt.questions_correct || 0
+        }));
+    }
+
+    /**
+     * Get all attempts by a specific student across all quizzes
+     */
+    static async getStudentQuizAttempts(student_id: string): Promise<StudentPerformance[]> {
+        const query = `
+            SELECT 
+                qa.*,
+                s.first_name,
+                s.last_name,
+                s.registration_number,
+                s.email,
+                s.enrollment_status,
+                q.topic,
+                q.total_questions,
+                q.time_limit,
+                COUNT(DISTINCT qa2.attempt_id) as attempt_number,
+                (
+                    SELECT COUNT(*)
+                    FROM question_responses qr
+                    WHERE qr.attempt_id = qa.attempt_id
+                    AND qr.is_correct = true
+                ) as questions_correct,
+                TIMESTAMPDIFF(SECOND, qa.start_time, COALESCE(qa.end_time, CURRENT_TIMESTAMP)) as time_spent
+            FROM quiz_attempts qa
+            JOIN students s ON qa.student_id = s.student_id
+            JOIN quizzes q ON qa.quiz_id = q.quiz_id
+            LEFT JOIN quiz_attempts qa2 ON 
+                qa2.quiz_id = qa.quiz_id AND 
+                qa2.student_id = qa.student_id AND 
+                qa2.attempt_id <= qa.attempt_id
+            WHERE qa.student_id = ?
+            GROUP BY qa.attempt_id
+            ORDER BY qa.start_time DESC
+        `;
+
+        const [attempts]: any = await db.query(query, [student_id]);
+
+        return attempts.map((attempt: any) => ({
+            ...attempt,
+            student_name: `${attempt.first_name} ${attempt.last_name}`,
+            time_spent: attempt.time_spent || null,
+            questions_correct: attempt.questions_correct || 0
+        }));
+    }
+
+    /**
+     * Get quiz performance statistics
+     */
+    static async getQuizStatistics(quiz_id: string) {
+        const query = `
+            SELECT 
+                COUNT(DISTINCT qa.student_id) as total_students,
+                COUNT(qa.attempt_id) as total_attempts,
+                ROUND(AVG(qa.score), 2) as average_score,
+                MIN(qa.score) as lowest_score,
+                MAX(qa.score) as highest_score,
+                SUM(CASE WHEN qa.status = 'completed' THEN 1 ELSE 0 END) as completed_attempts,
+                SUM(CASE WHEN qa.status = 'abandoned' THEN 1 ELSE 0 END) as abandoned_attempts,
+                ROUND(AVG(
+                    TIMESTAMPDIFF(SECOND, qa.start_time, COALESCE(qa.end_time, CURRENT_TIMESTAMP))
+                ), 0) as average_completion_time
+            FROM quiz_attempts qa
+            WHERE qa.quiz_id = ?
+        `;
+
+        const [statistics]: any = await db.query(query, [quiz_id]);
+        return statistics[0];
+    }
+
+    /**
+     * Get detailed question analysis for a quiz
+     */
+    static async getQuestionAnalysis(quiz_id: string) {
+        const query = `
+            SELECT 
+                q.question_id,
+                q.text as question_text,
+                COUNT(qr.response_id) as total_attempts,
+                SUM(CASE WHEN qr.is_correct THEN 1 ELSE 0 END) as correct_answers,
+                ROUND(AVG(qr.time_taken), 2) as average_time_taken,
+                ROUND((SUM(CASE WHEN qr.is_correct THEN 1 ELSE 0 END) / COUNT(qr.response_id)) * 100, 2) as success_rate
+            FROM questions q
+            LEFT JOIN question_responses qr ON q.question_id = qr.question_id
+            WHERE q.quiz_id = ?
+            GROUP BY q.question_id
+            ORDER BY success_rate DESC
+        `;
+
+        const [questions]: any = await db.query(query, [quiz_id]);
+        return questions;
     }
 }

@@ -1,13 +1,14 @@
+import {QuizAttempt} from "./quiz_attempt";
 
-export interface StudentPerformanceMetrics {
-    metric_id: string;
-    student_id: string;
-    course_id: string;
-    subtopic_id: string;
+export interface StudentPerformance extends QuizAttempt {
+    student_name: string;
+    registration_number: string;
+    email: string;
+    enrollment_status: string;
+    quiz_title: string;
+    topic: string;
+    questions_correct?: number;
     total_questions: number;
-    correct_answers: number;
-    average_time_per_question: number;
-    mastery_level: number;
-    last_attempt_date: Date;
-    updated_at: Date;
+    time_spent?: number;
+    attempt_number: number;
 }
