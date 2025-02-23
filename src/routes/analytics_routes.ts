@@ -14,9 +14,9 @@ router.get('/student/:student_id', AnalyticsController.getGeneralStudentAnalytic
 
 // Instructor analytics routes
 router.get('/course/:course_id', AnalyticsController.getGeneralInstructorAnalytics);
-// router.get('/course/:course_id/performance',  AnalyticsController.getCoursePerformance);
-// router.get('/course/:course_id/misconceptions',  AnalyticsController.getCourseMisconceptions);
-// router.get('/topic/:topic_id/analysis',  AnalyticsController.getTopicAnalysis);
-// router.get('/class/:class_id/overview',  AnalyticsController.getClassOverview);
+router.get('/quiz/:quiz_id/attempts',  AnalyticsController.getQuizAttempts);
+router.get('/student/:student_id/attempts',  AnalyticsController.getQuizAllAttemptsByStudent);
+router.get('/quiz/:quiz_id/statistics',  AnalyticsController.getQuizStatistics);
+router.get('/quiz/:quiz_id/analysis',  AnalyticsController.getQuestionAnalysis);
 
 export default router;
