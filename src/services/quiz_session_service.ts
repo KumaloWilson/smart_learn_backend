@@ -539,7 +539,13 @@ export class QuizSessionService {
     }
 
     static async getAllQuizzes(): Promise<Quiz[]> {
-        const [rows] = await db.query('SELECT * FROM quizzes WHERE creator_role = ?', ['lecturer']);
+        const [rows] = await db.query(
+            `SELECT * FROM quizzes 
+         WHERE creator_role = ? 
+         AND status = 'active'
+         AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)`,
+            ['lecturer']
+        );
         return rows as Quiz[];
     }
 
