@@ -36,7 +36,7 @@ const app = express();
 // Configure CORS
 const corsOptions = {
     origin: '*', // Allow requests from any origin. Replace '*' with specific origins for stricter security.
-    methods: 'GET,POST,PUT,DELETE', // Specify allowed HTTP methods
+    methods: 'GET,POST,PUT,DELETE, PATCH', // Specify allowed HTTP methods
     allowedHeaders: 'Content-Type,Authorization', // Specify allowed headers
 };
 

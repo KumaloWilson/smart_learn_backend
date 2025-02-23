@@ -559,7 +559,10 @@ export class QuizSessionService {
 
 
     static async getQuizzesByInstructorId(instructorId: string): Promise<Quiz[]> {
-        const [rows] = await db.query('SELECT * FROM quizzes WHERE created_by = ?', [instructorId]);
+        const [rows] = await db.query(
+            'SELECT * FROM quizzes WHERE created_by = ? AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)',
+            [instructorId]
+        );
         return rows as Quiz[];
     }
 }
