@@ -27,9 +27,9 @@ import auditLogRoutes from './routes/audit_log_routes';
 import quizGenerationRoutes from './routes/quiz_generation_routes';
 import quizSessionRoutes from './routes/quiz_attempt_routes';
 import quizAnalyticsRoutes from './routes/analytics_routes';
-//import quizProgressRoutes from './routes/progress_routes';
-import quizResponsesRoutes from './routes/quiz_response_router'
-import virtualClassesRoutes from './routes/virtual_classes_router'
+import quizResponsesRoutes from './routes/quiz_response_router';
+import studentQuizResponsesRoutes from './routes/student_quiz_response_routes';
+import virtualClassesRoutes from './routes/virtual_classes_router';
 
 const app = express();
 
@@ -81,7 +81,8 @@ app.use('/api/v1/qualification/types', qualificationTypeRoutes);
 //Quiz Routes
 app.use('/api/v1/quiz/generate', quizGenerationRoutes)
 app.use('/api/v1/quiz/session', quizSessionRoutes);
-app.use('/api/v1/quiz/responses', quizResponsesRoutes)
+app.use('/api/v1/quiz/responses', quizResponsesRoutes);
+app.use('/api/v1/quiz/student/responses', studentQuizResponsesRoutes);
 app.use('/api/v1/quiz/analytics', quizAnalyticsRoutes);
 
 //Virtual Classes
