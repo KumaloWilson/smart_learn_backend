@@ -4,7 +4,7 @@ import {StudentQuizAttemptsService} from "../services/student_quiz_response_serv
 export class StudentQuizAttemptsController {
     static async getAllAttempts(req: Request, res: Response) {
         try {
-            const studentId = req.user.id; // Assuming user info is attached by auth middleware
+            const {studentId} = req.params;
             const attempts = await StudentQuizAttemptsService.getStudentQuizAttempts(studentId);
             res.json({ success: true, data: attempts });
         } catch (error) {
@@ -18,7 +18,7 @@ export class StudentQuizAttemptsController {
 
     static async getCourseAttempts(req: Request, res: Response) {
         try {
-            const studentId = req.user.id;
+            const {studentId} = req.params;
             const { courseId } = req.params;
             const attempts = await StudentQuizAttemptsService.getStudentCourseQuizAttempts(
                 studentId,
@@ -36,7 +36,7 @@ export class StudentQuizAttemptsController {
 
     static async getAttemptsByCourseStats(req: Request, res: Response) {
         try {
-            const studentId = req.user.id;
+            const {studentId} = req.params;
             const stats = await StudentQuizAttemptsService.getQuizAttemptsByCourseStats(studentId);
             res.json({ success: true, data: stats });
         } catch (error) {
@@ -50,7 +50,7 @@ export class StudentQuizAttemptsController {
 
     static async getAttemptDetails(req: Request, res: Response) {
         try {
-            const studentId = req.user.id;
+            const {studentId} = req.params;
             const { attemptId } = req.params;
             const details = await StudentQuizAttemptsService.getQuizAttemptDetails(
                 studentId,

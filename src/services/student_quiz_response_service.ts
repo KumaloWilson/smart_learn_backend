@@ -15,7 +15,7 @@ export class StudentQuizAttemptsService {
                 q.topic,
                 q.subtopic,
                 q.difficulty,
-                c.name as course_name
+                c.course_name
             FROM quiz_attempts qa
             JOIN quizzes q ON qa.quiz_id = q.quiz_id
             JOIN courses c ON q.course_id = c.course_id
@@ -39,7 +39,7 @@ export class StudentQuizAttemptsService {
                 q.topic,
                 q.subtopic,
                 q.difficulty,
-                c.name as course_name
+                c.course_name
             FROM quiz_attempts qa
             JOIN quizzes q ON qa.quiz_id = q.quiz_id
             JOIN courses c ON q.course_id = c.course_id
@@ -58,7 +58,7 @@ export class StudentQuizAttemptsService {
         const [stats]: any = await db.query(`
             SELECT 
                 c.course_id,
-                c.name as course_name,
+                c.course_name,
                 COUNT(DISTINCT qa.quiz_id) as total_quizzes_attempted,
                 COUNT(qa.attempt_id) as total_attempts,
                 AVG(qa.score) as average_score,
@@ -68,8 +68,8 @@ export class StudentQuizAttemptsService {
             JOIN quizzes q ON c.course_id = q.course_id
             JOIN quiz_attempts qa ON q.quiz_id = qa.quiz_id
             WHERE qa.student_id = ?
-            GROUP BY c.course_id, c.name
-            ORDER BY c.name
+            GROUP BY c.course_id, c.course_name
+            ORDER BY c.course_name
         `, [studentId]);
 
         return stats;
